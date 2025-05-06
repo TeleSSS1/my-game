@@ -11,23 +11,13 @@ function decodePass(encoded) {
     return atob(encoded);
 }
 
-// Функция для получения данных пользователей из localStorage
-function getUsers() {
-    return JSON.parse(localStorage.getItem("users")) || {};
-}
-
-// Функция для сохранения данных пользователей в localStorage
-function saveUsers(users) {
-    localStorage.setItem("users", JSON.stringify(users));
-}
-
 async function showGamesSection() {
     if (!currentUser) {
         alert("Войдите в аккаунт!");
         return;
     }
-    const users = getUsers();
-    const userData = users[currentUser];
+    const snapshot = await database.ref('users/' + currentUser).once('value');
+    const userData = snapshot.val();
     if (!userData || !userData.isVerified) {
         alert("Ваш аккаунт не верифицирован! Обратитесь к администратору.");
         return;
@@ -50,8 +40,8 @@ async function showRoulette() {
         alert("Войдите в аккаунт!");
         return;
     }
-    const users = getUsers();
-    const userData = users[currentUser];
+    const snapshot = await database.ref('users/' + currentUser).once('value');
+    const userData = snapshot.val();
     if (!userData || !userData.isVerified) {
         alert("Ваш аккаунт не верифицирован! Обратитесь к администратору.");
         return;
@@ -108,11 +98,10 @@ async function spinMain() {
     const bonus = parseInt(document.getElementById("bonusResult").textContent.replace("Бонус: ", "").replace("x", ""));
     const totalWin = result * bonus;
 
-    const users = getUsers();
-    const userData = users[currentUser] || { balance: 0, points: 0, isVerified: false };
+    const snapshot = await database.ref('users/' + currentUser).once('value');
+    const userData = snapshot.val() || { balance: 0, points: 0, isVerified: false };
     const newBalance = userData.balance + totalWin;
-    users[currentUser].balance = newBalance;
-    saveUsers(users);
+    await database.ref('users/' + currentUser).update({ balance: newBalance });
 
     updateUserInfo();
     lastSpinTime = new Date().getTime();
@@ -164,8 +153,8 @@ function handleAccountClick() {
 }
 
 async function showProfile() {
-    const users = getUsers();
-    const userData = users[currentUser] || { balance: 0, points: 0, isVerified: false };
+    const snapshot = await database.ref('users/' + currentUser).once('value');
+    const userData = snapshot.val() || { balance: 0, points: 0, isVerified: false };
     const spins = Math.floor(userData.balance / 10);
 
     document.getElementById("profileLogin").textContent = "Логин: " + currentUser;
@@ -210,7 +199,8 @@ function handleAdminLogin() {
 }
 
 async function showAdminPanel() {
-    const users = getUsers();
+    const snapshot = await database.ref('users').once('value');
+    const users = snapshot.val() || {};
     const playerSelect = document.getElementById("playerSelect");
     playerSelect.innerHTML = '<option value="">Выберите игрока</option>';
 
@@ -238,8 +228,8 @@ function closeAdminPanel() {
 async function updatePlayerInfo() {
     const selectedUser = document.getElementById("playerSelect").value;
     if (selectedUser) {
-        const users = getUsers();
-        const userData = users[selectedUser] || { balance: 0, points: 0, isVerified: false };
+        const snapshot = await database.ref('users/' + selectedUser).once('value');
+        const userData = snapshot.val() || { balance: 0, points: 0, isVerified: false };
         document.getElementById("playerBalance").textContent = "Валюта: " + userData.balance;
         document.getElementById("playerPoints").textContent = "Поинты: " + userData.points;
         document.getElementById("playerVerified").innerHTML = userData.isVerified 
@@ -265,10 +255,7 @@ async function updateBalance() {
         return;
     }
 
-    const users = getUsers();
-    users[selectedUser].balance = newBalance;
-    saveUsers(users);
-
+    await database.ref('users/' + selectedUser).update({ balance: newBalance });
     document.getElementById("playerBalance").textContent = "Валюта: " + newBalance;
     document.getElementById("newBalance").value = "";
     if (selectedUser === currentUser) updateUserInfo();
@@ -287,10 +274,7 @@ async function updatePoints() {
         return;
     }
 
-    const users = getUsers();
-    users[selectedUser].points = newPoints;
-    saveUsers(users);
-
+    await database.ref('users/' + selectedUser).update({ points: newPoints });
     document.getElementById("playerPoints").textContent = "Поинты: " + newPoints;
     document.getElementById("newPoints").value = "";
     if (selectedUser === currentUser) updateUserInfo();
@@ -303,10 +287,7 @@ async function verifyPlayer(verify) {
         return;
     }
 
-    const users = getUsers();
-    users[selectedUser].isVerified = verify;
-    saveUsers(users);
-
+    await database.ref('users/' + selectedUser).update({ isVerified: verify });
     document.getElementById("playerVerified").innerHTML = verify 
         ? "Верифицирован: <span class='verified-icon'>✔</span>" 
         : "Верифицирован: <span class='unverified-icon'>✖</span>";
@@ -315,8 +296,8 @@ async function verifyPlayer(verify) {
 
 async function updateUserInfo() {
     if (currentUser) {
-        const users = getUsers();
-        const userData = users[currentUser] || { balance: 0, points: 0, isVerified: false };
+        const snapshot = await database.ref('users/' + currentUser).once('value');
+        const userData = snapshot.val() || { balance: 0, points: 0, isVerified: false };
         document.getElementById("avatar").textContent = "🧑";
         document.getElementById("loginText").textContent = "Логин: " + currentUser;
         document.getElementById("loginText").classList.remove("blurred");
@@ -353,10 +334,10 @@ async function handleAuth() {
         return;
     }
 
-    let users = getUsers();
-
     if (isLogin) {
-        if (users[username] && users[username].password === password) {
+        const snapshot = await database.ref('users/' + username).once('value');
+        const userData = snapshot.val();
+        if (userData && userData.password === password) {
             console.log("Вход успешен:", username);
             alert("Вход выполнен: " + username);
             currentUser = username;
@@ -368,17 +349,17 @@ async function handleAuth() {
             alert("Неверное имя пользователя или пароль!");
         }
     } else {
-        if (users[username]) {
+        const snapshot = await database.ref('users/' + username).once('value');
+        if (snapshot.exists()) {
             console.log("Регистрация неуспешна: пользователь уже существует", username);
             alert("Пользователь уже существует!");
         } else {
-            users[username] = {
+            await database.ref('users/' + username).set({
                 password: password,
                 balance: 0,
                 points: 0,
                 isVerified: false
-            };
-            saveUsers(users);
+            });
             console.log("Регистрация успешна:", username);
             alert("Регистрация выполнена: " + username);
             currentUser = username;
