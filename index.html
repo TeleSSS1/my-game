@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Моя Игра</title>
+    <link rel="stylesheet" href="style.css">
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getDatabase } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyD3w3MpCX-3r-VZKVHIJf6Ia7DqcQ",
+            authDomain: "gameforfriends-7789f.firebaseapp.com",
+            databaseURL: "https://gameforfriends-7789f-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "gameforfriends-7789f",
+            storageBucket: "gameforfriends-7789f.appspot.com",
+            messagingSenderId: "36922585094",
+            appId: "1:36922585094:web:f7e41641f6aa1996d914d",
+            measurementId: "G-3X19GXGZ"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        window.database = getDatabase(app); // Делаем database глобальной переменной
+    </script>
+</head>
+<body>
+    <header id="mainHeader">
+        <div id="avatar">🕵️</div>
+        <div id="loginText" class="blurred">Логин: [закрыто]</div>
+        <div id="balanceText" class="blurred">Баланс: [закрыто]</div>
+        <div id="pointsText" class="blurred">Поинты: [закрыто]</div>
+        <button id="accountButton" onclick="handleAccountClick()">Вход/Регистрация</button>
+        <button id="adminButton" onclick="showAdminLogin()">Админ</button>
+        <button onclick="showGamesSection()">Игры</button>
+        <button onclick="showShop()">Магазин</button>
+    </header>
+
+    <div id="authForm" style="display: none;">
+        <h2 id="formTitle">Вход</h2>
+        <input type="text" id="username" placeholder="Логин">
+        <input type="password" id="password" placeholder="Пароль">
+        <button id="authButton" onclick="handleAuth()">Войти в аккаунт</button>
+        <button id="toggleButton" onclick="toggleForm()">Зарегистрироваться</button>
+        <button onclick="closeAuth()">Закрыть</button>
+    </div>
+
+    <div id="profileForm" style="display: none;">
+        <h2>Профиль</h2>
+        <p id="profileLogin">Логин: </p>
+        <p id="profileBalance">Валюта: </p>
+        <p id="profilePoints">Поинты: </p>
+        <p id="profileSpins">Прокруты: </p>
+        <p id="profileVerified">Верифицирован: </p>
+        <button onclick="logout()">Выйти</button>
+        <button onclick="closeProfile()">Закрыть</button>
+    </div>
+
+    <div id="adminLoginForm" style="display: none;">
+        <h2>Вход для админа</h2>
+        <input type="text" id="adminUsername" placeholder="Логин">
+        <input type="password" id="adminPassword" placeholder="Пароль">
+        <button onclick="handleAdminLogin()">Войти</button>
+        <button onclick="closeAdminLogin()">Закрыть</button>
+    </div>
+
+    <div id="adminPanel" style="display: none;">
+        <h2>Админ-панель</h2>
+        <select id="playerSelect" onchange="updatePlayerInfo()">
+            <option value="">Выберите игрока</option>
+        </select>
+        <p id="playerBalance">Валюта: 0</p>
+        <p id="playerPoints">Поинты: 0</p>
+        <p id="playerVerified">Верифицирован: <span class="unverified-icon">✖</span></p>
+        <input type="number" id="newBalance" placeholder="Новая валюта">
+        <button onclick="updateBalance()">Обновить валюту</button>
+        <input type="number" id="newPoints" placeholder="Новые поинты">
+        <button onclick="updatePoints()">Обновить поинты</button>
+        <button onclick="verifyPlayer(true)">Верифицировать</button>
+        <button onclick="verifyPlayer(false)">Отклонить верификацию</button>
+        <button onclick="closeAdminPanel()">Закрыть</button>
+    </div>
+
+    <div id="gameSectionHeader" style="display: none;">
+        <button onclick="backToMain()">Назад</button>
+        <div id="balanceTextSecondary" class="blurred">Баланс: [закрыто]</div>
+        <div id="pointsTextSecondary" class="blurred">Поинты: [закрыто]</div>
+    </div>
+    <div id="gameGrid" style="display: none;">
+        <button onclick="showRoulette()">Рулетка</button>
+    </div>
+
+    <div id="gameForm" style="display: none;">
+        <button onclick="backToGames()">Назад</button>
+        <button onclick="closeGame()">Закрыть</button>
+    </div>
+
+    <script src="main.js"></script>
+</body>
+</html>
