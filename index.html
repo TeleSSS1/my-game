@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CasinoApp</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="top-bar-left">
+        <button onclick="showGamesSection()">Игры</button>
+    </div>
+    <div class="top-bar">
+        <button onclick="showShop()">Магазин</button>
+        <div class="account-container">
+            <div class="stats-text" id="balanceTextSecondary">Баланс: [закрыто]</div>
+            <button id="accountButton" onclick="handleAccountClick()">Мой аккаунт</button>
+            <div class="stats-text" id="pointsTextSecondary">Поинты: [закрыто]</div>
+        </div>
+    </div>
+
+    <div class="header" id="mainHeader">
+        <div class="user-info">
+            <div id="loginText" class="blurred">Логин: [закрыто]</div>
+            <div id="balanceText" class="blurred">Баланс: [закрыто]</div>
+            <div id="pointsText" class="blurred">Поинты: [закрыто]</div>
+        </div>
+        <div class="avatar" id="avatar">🕵️</div>
+    </div>
+
+    <button class="admin-button" onclick="showAdminLogin()" id="adminButton">Администрирование</button>
+
+    <div class="game-section-header" id="gameSectionHeader" style="display: none;">
+        <button class="back-btn" onclick="backToMain()">Назад</button>
+    </div>
+    <div class="game-grid" id="gameGrid" style="display: none;">
+        <div class="game-item green" onclick="showRoulette()">
+            <div>🎰</div>
+            <p>Бонусная рулетка</p>
+        </div>
+        <div class="game-item blue" onclick="window.location.href='games/gates.html'">
+            <div>🌟</div>
+            <p>Gates of Olympus</p>
+        </div>
+        <div class="game-item red blur" onclick="alert('Игра заблокирована!')">
+            <div>❓</div>
+            <p class="blurred">???</p>
+        </div>
+    </div>
+
+    <div class="auth-form" id="authForm" style="display: none;">
+        <h2 id="formTitle">Вход</h2>
+        <input type="text" id="username" placeholder="Имя пользователя" required>
+        <input type="password" id="password" placeholder="Пароль" required>
+        <button class="auth-button" onclick="handleAuth()" id="authButton">Войти в аккаунт</button>
+        <button class="close-btn" onclick="closeAuth()">Закрыть</button>
+        <div class="button-container">
+            <button class="toggle-btn" onclick="toggleForm()" id="toggleButton">Зарегистрироваться</button>
+            <button class="toggle-btn" onclick="logout()">Выход из аккаунта</button>
+        </div>
+    </div>
+
+    <div class="profile-form" id="profileForm" style="display: none;">
+        <h2>Профиль</h2>
+        <div class="avatar">🧑</div>
+        <p id="profileLogin">Логин: </p>
+        <p id="profileBalance">Валюта: </p>
+        <p id="profilePoints">Поинты: </p>
+        <p id="profileSpins">Прокруты: </p>
+        <p id="profileVerified">Верифицирован: <span class="unverified-icon">✖</span></p>
+        <p id="profileFavoriteGame">Любимая игра: Нет</p>
+        <p id="profileGameTime">Время в игре: 0 часов</p>
+        <button class="close-btn" onclick="closeProfile()">Закрыть</button>
+        <button class="close-btn" onclick="logout()">Выход из аккаунта</button>
+    </div>
+
+    <div class="admin-login-form" id="adminLoginForm" style="display: none;">
+        <h2>Админка</h2>
+        <input type="text" id="adminUsername" placeholder="Логин" required>
+        <input type="password" id="adminPassword" placeholder="Пароль" required>
+        <button class="auth-button" onclick="handleAdminLogin()">Войти</button>
+        <button class="close-btn" onclick="closeAdminLogin()">Закрыть</button>
+    </div>
+
+    <div class="admin-panel" id="adminPanel" style="display: none;">
+        <h2>Панель админа</h2>
+        <p>Выберите игрока:</p>
+        <select id="playerSelect" onchange="updatePlayerInfo()">
+            <option value="">Выберите игрока</option>
+        </select>
+        <p id="playerBalance">Валюта: 0</p>
+        <input type="number" id="newBalance" placeholder="Новая валюта" min="0">
+        <button class="auth-button" onclick="updateBalance()">Изменить валюту</button>
+        <p id="playerPoints">Поинты: 0</p>
+        <input type="number" id="newPoints" placeholder="Новые поинты" min="0">
+        <button class="auth-button" onclick="updatePoints()">Изменить поинты</button>
+        <p id="playerVerified">Верифицирован: <span class="unverified-icon">✖</span></p>
+        <button class="auth-button" onclick="verifyPlayer(true)">Верифицировать</button>
+        <button class="close-btn" onclick="verifyPlayer(false)">Отклонить верификацию</button>
+        <button class="close-btn" onclick="closeAdminPanel()">Выход из админки</button>
+    </div>
+
+    <div class="game-form" id="gameForm" style="display: none;">
+        <h2>Бонусная рулетка</h2>
+        <div class="avatar" id="rouletteResult">🎰</div>
+        <p id="bonusResult">Бонус: -</p>
+        <p id="spinResult">Выигрыш: -</p>
+        <button class="spin-button" id="bonusSpinBtn" onclick="spinBonus()">Прокрутить бонус</button>
+        <button class="spin-button" id="mainSpinBtn" onclick="spinMain()" disabled>Прокрутить рулетку</button>
+        <button class="back-btn" onclick="backToGames()">Назад</button>
+        <button class="close-btn" onclick="closeGame()">Закрыть</button>
+        <p id="cooldownText">Следующая прокрутка доступна через: -</p>
+    </div>
+
+    <script src="js/main.js"></script>
+</html>
