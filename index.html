@@ -5,10 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Моя Игра</title>
     <link rel="stylesheet" href="style.css">
-    <!-- Подключение Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js"></script>
-    <!-- Инициализация Firebase -->
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyD3w3MpCX-3r-VZKVHIJf6Ia7DqcQ",
@@ -25,7 +23,6 @@
     </script>
 </head>
 <body>
-    <!-- Основной контент -->
     <header id="mainHeader">
         <div id="avatar">🕵️</div>
         <div id="loginText" class="blurred">Логин: [закрыто]</div>
@@ -37,7 +34,6 @@
         <button onclick="showShop()">Магазин</button>
     </header>
 
-    <!-- Форма авторизации -->
     <div id="authForm" style="display: none;">
         <h2 id="formTitle">Вход</h2>
         <input type="text" id="username" placeholder="Логин">
@@ -47,7 +43,6 @@
         <button onclick="closeAuth()">Закрыть</button>
     </div>
 
-    <!-- Профиль пользователя -->
     <div id="profileForm" style="display: none;">
         <h2>Профиль</h2>
         <p id="profileLogin">Логин: </p>
@@ -59,7 +54,6 @@
         <button onclick="closeProfile()">Закрыть</button>
     </div>
 
-    <!-- Форма входа в админ-панель -->
     <div id="adminLoginForm" style="display: none;">
         <h2>Вход для админа</h2>
         <input type="text" id="adminUsername" placeholder="Логин">
@@ -68,7 +62,6 @@
         <button onclick="closeAdminLogin()">Закрыть</button>
     </div>
 
-    <!-- Админ-панель -->
     <div id="adminPanel" style="display: none;">
         <h2>Админ-панель</h2>
         <select id="playerSelect" onchange="updatePlayerInfo()">
@@ -86,7 +79,6 @@
         <button onclick="closeAdminPanel()">Закрыть</button>
     </div>
 
-    <!-- Секция игр -->
     <div id="gameSectionHeader" style="display: none;">
         <button onclick="backToMain()">Назад</button>
         <div id="balanceTextSecondary" class="blurred">Баланс: [закрыто]</div>
@@ -96,13 +88,11 @@
         <button onclick="showRoulette()">Рулетка</button>
     </div>
 
-    <!-- Форма игры -->
     <div id="gameForm" style="display: none;">
         <button onclick="backToGames()">Назад</button>
         <button onclick="closeGame()">Закрыть</button>
     </div>
 
-    <!-- Подключение скрипта игры -->
     <script src="main.js"></script>
 </body>
 </html>
