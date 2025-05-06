@@ -76,7 +76,7 @@ function checkSpinCooldown() {
         const cooldownText = document.getElementById("cooldownText");
         const bonusSpinBtn = document.getElementById("bonusSpinBtn");
         const mainSpinBtn = document.getElementById("mainSpinBtn");
-        if (!cooldownText || !bonusSpinBtn || !mainSpinBtn) return; // Пропускаем, если элементов нет
+        if (!cooldownText || !bonusSpinBtn || !mainSpinBtn) return;
 
         if (lastSpinTime) {
             const now = new Date().getTime();
@@ -442,4 +442,3 @@ function showShop() {
 
 // Инициализация
 updateUserInfo();
-// Вызов checkSpinCooldown убран, так как элементы для него есть только в roulette.html
