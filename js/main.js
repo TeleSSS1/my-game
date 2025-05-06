@@ -1,20 +1,6 @@
-// Инициализация Firebase
-const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-    databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_PROJECT_ID.appspot.com",
-    messagingSenderId: "YOUR_SENDER_ID",
-    appId: "YOUR_APP_ID"
-};
-
-firebase.initializeApp(firebaseConfig);
-const database = firebase.database();
-
-let currentUser = localStorage.getItem("currentUser"); // Сохраняем текущего пользователя локально
+let currentUser = localStorage.getItem("currentUser");
 let isAdmin = false;
-let lastSpinTime = null;
+let lastSpinTime = localStorage.getItem("lastSpinTime");
 let isLogin = true;
 
 // Закодированный пароль в base64 для "3gh5vd43gyy6"
@@ -25,22 +11,31 @@ function decodePass(encoded) {
     return atob(encoded);
 }
 
-function showGamesSection() {
+// Функция для получения данных пользователей из localStorage
+function getUsers() {
+    return JSON.parse(localStorage.getItem("users")) || {};
+}
+
+// Функция для сохранения данных пользователей в localStorage
+function saveUsers(users) {
+    localStorage.setItem("users", JSON.stringify(users));
+}
+
+async function showGamesSection() {
     if (!currentUser) {
         alert("Войдите в аккаунт!");
         return;
     }
-    database.ref('users/' + currentUser).once('value').then((snapshot) => {
-        const userData = snapshot.val();
-        if (!userData.isVerified) {
-            alert("Ваш аккаунт не верифицирован! Обратитесь к администратору.");
-            return;
-        }
-        document.getElementById("mainHeader").style.display = "none";
-        document.getElementById("gameGrid").style.display = "grid";
-        document.getElementById("gameSectionHeader").style.display = "block";
-        document.getElementById("adminButton").style.display = "none";
-    });
+    const users = getUsers();
+    const userData = users[currentUser];
+    if (!userData || !userData.isVerified) {
+        alert("Ваш аккаунт не верифицирован! Обратитесь к администратору.");
+        return;
+    }
+    document.getElementById("mainHeader").style.display = "none";
+    document.getElementById("gameGrid").style.display = "grid";
+    document.getElementById("gameSectionHeader").style.display = "block";
+    document.getElementById("adminButton").style.display = "none";
 }
 
 function backToMain() {
@@ -50,19 +45,18 @@ function backToMain() {
     document.getElementById("adminButton").style.display = "block";
 }
 
-function showRoulette() {
+async function showRoulette() {
     if (!currentUser) {
         alert("Войдите в аккаунт!");
         return;
     }
-    database.ref('users/' + currentUser).once('value').then((snapshot) => {
-        const userData = snapshot.val();
-        if (!userData.isVerified) {
-            alert("Ваш аккаунт не верифицирован! Обратитесь к администратору.");
-            return;
-        }
-        window.location.href = "games/roulette.html";
-    });
+    const users = getUsers();
+    const userData = users[currentUser];
+    if (!userData || !userData.isVerified) {
+        alert("Ваш аккаунт не верифицирован! Обратитесь к администратору.");
+        return;
+    }
+    window.location.href = "games/roulette.html";
 }
 
 function backToGames() {
@@ -103,9 +97,8 @@ function spinBonus() {
     document.getElementById("mainSpinBtn").disabled = false;
 }
 
-function spinMain() {
+async function spinMain() {
     const mainValues = [1, 5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200];
-    const spins = Math.floor(Math.random() * 40);
     let result = mainValues[Math.floor(Math.random() * mainValues.length)];
     let emoji = "";
     if (result === 50) emoji = " 🐒";
@@ -115,14 +108,15 @@ function spinMain() {
     const bonus = parseInt(document.getElementById("bonusResult").textContent.replace("Бонус: ", "").replace("x", ""));
     const totalWin = result * bonus;
 
-    database.ref('users/' + currentUser).once('value').then((snapshot) => {
-        const userData = snapshot.val();
-        const newBalance = (userData.balance || 0) + totalWin;
-        database.ref('users/' + currentUser).update({ balance: newBalance });
-        updateUserInfo();
-    });
+    const users = getUsers();
+    const userData = users[currentUser] || { balance: 0, points: 0, isVerified: false };
+    const newBalance = userData.balance + totalWin;
+    users[currentUser].balance = newBalance;
+    saveUsers(users);
 
+    updateUserInfo();
     lastSpinTime = new Date().getTime();
+    localStorage.setItem("lastSpinTime", lastSpinTime);
     document.getElementById("bonusSpinBtn").disabled = true;
     document.getElementById("mainSpinBtn").disabled = true;
     checkSpinCooldown();
@@ -169,21 +163,20 @@ function handleAccountClick() {
     }
 }
 
-function showProfile() {
-    database.ref('users/' + currentUser).once('value').then((snapshot) => {
-        const userData = snapshot.val();
-        const spins = Math.floor(userData.balance / 10);
+async function showProfile() {
+    const users = getUsers();
+    const userData = users[currentUser] || { balance: 0, points: 0, isVerified: false };
+    const spins = Math.floor(userData.balance / 10);
 
-        document.getElementById("profileLogin").textContent = "Логин: " + currentUser;
-        document.getElementById("profileBalance").textContent = "Валюта: " + userData.balance;
-        document.getElementById("profilePoints").textContent = "Поинты: " + userData.points;
-        document.getElementById("profileSpins").textContent = "Прокруты: " + spins;
-        document.getElementById("profileVerified").innerHTML = userData.isVerified 
-            ? "Верифицирован: <span class='verified-icon'>✔</span>" 
-            : "Верифицирован: <span class='unverified-icon'>✖</span>";
-        document.getElementById("profileForm").style.display = "block";
-        document.getElementById("adminButton").style.display = "none";
-    });
+    document.getElementById("profileLogin").textContent = "Логин: " + currentUser;
+    document.getElementById("profileBalance").textContent = "Валюта: " + userData.balance;
+    document.getElementById("profilePoints").textContent = "Поинты: " + userData.points;
+    document.getElementById("profileSpins").textContent = "Прокруты: " + spins;
+    document.getElementById("profileVerified").innerHTML = userData.isVerified 
+        ? "Верифицирован: <span class='verified-icon'>✔</span>" 
+        : "Верифицирован: <span class='unverified-icon'>✖</span>";
+    document.getElementById("profileForm").style.display = "block";
+    document.getElementById("adminButton").style.display = "none";
 }
 
 function closeProfile() {
@@ -216,26 +209,24 @@ function handleAdminLogin() {
     }
 }
 
-function showAdminPanel() {
-    database.ref('users').once('value').then((snapshot) => {
-        const users = snapshot.val();
-        const playerSelect = document.getElementById("playerSelect");
-        playerSelect.innerHTML = '<option value="">Выберите игрока</option>';
+async function showAdminPanel() {
+    const users = getUsers();
+    const playerSelect = document.getElementById("playerSelect");
+    playerSelect.innerHTML = '<option value="">Выберите игрока</option>';
 
-        for (const user in users) {
-            const option = document.createElement("option");
-            option.value = user;
-            option.textContent = user;
-            playerSelect.appendChild(option);
-        }
-
-        document.getElementById("playerBalance").textContent = "Валюта: 0";
-        document.getElementById("playerPoints").textContent = "Поинты: 0";
-        document.getElementById("playerVerified").innerHTML = "Верифицирован: <span class='unverified-icon'>✖</span>";
-        document.getElementById("newBalance").value = "";
-        document.getElementById("newPoints").value = "";
-        document.getElementById("adminPanel").style.display = "block";
+    Object.keys(users).forEach(username => {
+        const option = document.createElement("option");
+        option.value = username;
+        option.textContent = username;
+        playerSelect.appendChild(option);
     });
+
+    document.getElementById("playerBalance").textContent = "Валюта: 0";
+    document.getElementById("playerPoints").textContent = "Поинты: 0";
+    document.getElementById("playerVerified").innerHTML = "Верифицирован: <span class='unverified-icon'>✖</span>";
+    document.getElementById("newBalance").value = "";
+    document.getElementById("newPoints").value = "";
+    document.getElementById("adminPanel").style.display = "block";
 }
 
 function closeAdminPanel() {
@@ -244,17 +235,16 @@ function closeAdminPanel() {
     document.getElementById("adminButton").style.display = "block";
 }
 
-function updatePlayerInfo() {
+async function updatePlayerInfo() {
     const selectedUser = document.getElementById("playerSelect").value;
     if (selectedUser) {
-        database.ref('users/' + selectedUser).once('value').then((snapshot) => {
-            const userData = snapshot.val();
-            document.getElementById("playerBalance").textContent = "Валюта: " + userData.balance;
-            document.getElementById("playerPoints").textContent = "Поинты: " + userData.points;
-            document.getElementById("playerVerified").innerHTML = userData.isVerified 
-                ? "Верифицирован: <span class='verified-icon'>✔</span>" 
-                : "Верифицирован: <span class='unverified-icon'>✖</span>";
-        });
+        const users = getUsers();
+        const userData = users[selectedUser] || { balance: 0, points: 0, isVerified: false };
+        document.getElementById("playerBalance").textContent = "Валюта: " + userData.balance;
+        document.getElementById("playerPoints").textContent = "Поинты: " + userData.points;
+        document.getElementById("playerVerified").innerHTML = userData.isVerified 
+            ? "Верифицирован: <span class='verified-icon'>✔</span>" 
+            : "Верифицирован: <span class='unverified-icon'>✖</span>";
     } else {
         document.getElementById("playerBalance").textContent = "Валюта: 0";
         document.getElementById("playerPoints").textContent = "Поинты: 0";
@@ -262,7 +252,7 @@ function updatePlayerInfo() {
     }
 }
 
-function updateBalance() {
+async function updateBalance() {
     const selectedUser = document.getElementById("playerSelect").value;
     const newBalance = parseInt(document.getElementById("newBalance").value);
 
@@ -275,14 +265,16 @@ function updateBalance() {
         return;
     }
 
-    database.ref('users/' + selectedUser).update({ balance: newBalance }).then(() => {
-        document.getElementById("playerBalance").textContent = "Валюта: " + newBalance;
-        document.getElementById("newBalance").value = "";
-        if (selectedUser === currentUser) updateUserInfo();
-    });
+    const users = getUsers();
+    users[selectedUser].balance = newBalance;
+    saveUsers(users);
+
+    document.getElementById("playerBalance").textContent = "Валюта: " + newBalance;
+    document.getElementById("newBalance").value = "";
+    if (selectedUser === currentUser) updateUserInfo();
 }
 
-function updatePoints() {
+async function updatePoints() {
     const selectedUser = document.getElementById("playerSelect").value;
     const newPoints = parseInt(document.getElementById("newPoints").value);
 
@@ -295,45 +287,48 @@ function updatePoints() {
         return;
     }
 
-    database.ref('users/' + selectedUser).update({ points: newPoints }).then(() => {
-        document.getElementById("playerPoints").textContent = "Поинты: " + newPoints;
-        document.getElementById("newPoints").value = "";
-        if (selectedUser === currentUser) updateUserInfo();
-    });
+    const users = getUsers();
+    users[selectedUser].points = newPoints;
+    saveUsers(users);
+
+    document.getElementById("playerPoints").textContent = "Поинты: " + newPoints;
+    document.getElementById("newPoints").value = "";
+    if (selectedUser === currentUser) updateUserInfo();
 }
 
-function verifyPlayer(verify) {
+async function verifyPlayer(verify) {
     const selectedUser = document.getElementById("playerSelect").value;
     if (!selectedUser) {
         alert("Выберите игрока!");
         return;
     }
 
-    database.ref('users/' + selectedUser).update({ isVerified: verify }).then(() => {
-        document.getElementById("playerVerified").innerHTML = verify 
-            ? "Верифицирован: <span class='verified-icon'>✔</span>" 
-            : "Верифицирован: <span class='unverified-icon'>✖</span>";
-        alert(`Верификация для ${selectedUser} ${verify ? "подтверждена" : "отклонена"}!`);
-    });
+    const users = getUsers();
+    users[selectedUser].isVerified = verify;
+    saveUsers(users);
+
+    document.getElementById("playerVerified").innerHTML = verify 
+        ? "Верифицирован: <span class='verified-icon'>✔</span>" 
+        : "Верифицирован: <span class='unverified-icon'>✖</span>";
+    alert(`Верификация для ${selectedUser} ${verify ? "подтверждена" : "отклонена"}!`);
 }
 
-function updateUserInfo() {
+async function updateUserInfo() {
     if (currentUser) {
-        database.ref('users/' + currentUser).once('value').then((snapshot) => {
-            const userData = snapshot.val() || { balance: 0, points: 0 };
-            document.getElementById("avatar").textContent = "🧑";
-            document.getElementById("loginText").textContent = "Логин: " + currentUser;
-            document.getElementById("loginText").classList.remove("blurred");
-            document.getElementById("balanceText").textContent = "Баланс: " + userData.balance;
-            document.getElementById("balanceText").classList.remove("blurred");
-            document.getElementById("pointsText").textContent = "Поинты: " + userData.points;
-            document.getElementById("pointsText").classList.remove("blurred");
-            document.getElementById("accountButton").textContent = "Мой аккаунт";
-            document.getElementById("balanceTextSecondary").textContent = "Баланс: " + userData.balance;
-            document.getElementById("balanceTextSecondary").classList.remove("blurred");
-            document.getElementById("pointsTextSecondary").textContent = "Поинты: " + userData.points;
-            document.getElementById("pointsTextSecondary").classList.remove("blurred");
-        });
+        const users = getUsers();
+        const userData = users[currentUser] || { balance: 0, points: 0, isVerified: false };
+        document.getElementById("avatar").textContent = "🧑";
+        document.getElementById("loginText").textContent = "Логин: " + currentUser;
+        document.getElementById("loginText").classList.remove("blurred");
+        document.getElementById("balanceText").textContent = "Баланс: " + userData.balance;
+        document.getElementById("balanceText").classList.remove("blurred");
+        document.getElementById("pointsText").textContent = "Поинты: " + userData.points;
+        document.getElementById("pointsText").classList.remove("blurred");
+        document.getElementById("accountButton").textContent = "Мой аккаунт";
+        document.getElementById("balanceTextSecondary").textContent = "Баланс: " + userData.balance;
+        document.getElementById("balanceTextSecondary").classList.remove("blurred");
+        document.getElementById("pointsTextSecondary").textContent = "Поинты: " + userData.points;
+        document.getElementById("pointsTextSecondary").classList.remove("blurred");
     } else {
         document.getElementById("avatar").textContent = "🕵️";
         document.getElementById("loginText").textContent = "Логин: [закрыто]";
@@ -350,7 +345,7 @@ function updateUserInfo() {
     }
 }
 
-function handleAuth() {
+async function handleAuth() {
     const username = document.getElementById("username").value.trim();
     const password = document.getElementById("password").value;
     if (!username || !password) {
@@ -358,42 +353,39 @@ function handleAuth() {
         return;
     }
 
+    let users = getUsers();
+
     if (isLogin) {
-        database.ref('users/' + username).once('value').then((snapshot) => {
-            const userData = snapshot.val();
-            if (userData && userData.password === password) {
-                console.log("Вход успешен:", username);
-                alert("Вход выполнен: " + username);
-                currentUser = username;
-                localStorage.setItem("currentUser", currentUser);
-                updateUserInfo();
-                closeAuth();
-            } else {
-                console.log("Вход неуспешен:", username);
-                alert("Неверное имя пользователя или пароль!");
-            }
-        });
+        if (users[username] && users[username].password === password) {
+            console.log("Вход успешен:", username);
+            alert("Вход выполнен: " + username);
+            currentUser = username;
+            localStorage.setItem("currentUser", currentUser);
+            updateUserInfo();
+            closeAuth();
+        } else {
+            console.log("Вход неуспешен:", username);
+            alert("Неверное имя пользователя или пароль!");
+        }
     } else {
-        database.ref('users/' + username).once('value').then((snapshot) => {
-            if (snapshot.exists()) {
-                console.log("Регистрация неуспешна: пользователь уже существует", username);
-                alert("Пользователь уже существует!");
-            } else {
-                database.ref('users/' + username).set({
-                    password: password,
-                    balance: 0,
-                    points: 0,
-                    isVerified: false
-                }).then(() => {
-                    console.log("Регистрация успешна:", username, password);
-                    alert("Регистрация выполнена: " + username);
-                    currentUser = username;
-                    localStorage.setItem("currentUser", currentUser);
-                    updateUserInfo();
-                    closeAuth();
-                });
-            }
-        });
+        if (users[username]) {
+            console.log("Регистрация неуспешна: пользователь уже существует", username);
+            alert("Пользователь уже существует!");
+        } else {
+            users[username] = {
+                password: password,
+                balance: 0,
+                points: 0,
+                isVerified: false
+            };
+            saveUsers(users);
+            console.log("Регистрация успешна:", username);
+            alert("Регистрация выполнена: " + username);
+            currentUser = username;
+            localStorage.setItem("currentUser", currentUser);
+            updateUserInfo();
+            closeAuth();
+        }
     }
 }
 
