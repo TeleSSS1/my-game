@@ -15,19 +15,27 @@ const multiplierSound = document.getElementById("multiplierSound");
 const bonusSound = document.getElementById("bonusSound");
 
 function checkLogin() {
-    if (!localStorage.getItem("currentUser")) {
+    const currentUser = localStorage.getItem("currentUser");
+    if (!currentUser) {
         alert("Войдите в аккаунт!");
         window.location.href = "../index.html";
         return false;
     }
-    const users = JSON.parse(localStorage.getItem("users"));
-    const currentUser = localStorage.getItem("currentUser");
-    if (!users[currentUser].isVerified) {
-        alert("Ваш аккаунт не верифицирован! Обратитесь к администратору.");
-        window.location.href = "../index.html";
-        return false;
-    }
     return true;
+}
+
+async function getUserData() {
+    const currentUser = localStorage.getItem("currentUser");
+    const userRef = window.dbRef(window.database, 'users/' + currentUser);
+    const snapshot = await window.dbGet(userRef);
+    return snapshot.val() || { balance: 0 };
+}
+
+async function updateUserBalance(newBalance) {
+    const currentUser = localStorage.getItem("currentUser");
+    const userRef = window.dbRef(window.database, 'users/' + currentUser);
+    await window.dbUpdate(userRef, { balance: newBalance });
+    document.getElementById("info-panel").querySelector("p:nth-child(3)").textContent = `Баланс: ${newBalance}`;
 }
 
 function initializeGrid() {
@@ -135,22 +143,17 @@ function triggerBonusSpins() {
 
 async function spinSlot() {
     if (!checkLogin()) return;
-    const currentUser = localStorage.getItem("currentUser");
-    const users = JSON.parse(localStorage.getItem("users"));
-    const userData = users[currentUser];
+    const userData = await getUserData();
     if (userData.balance < SPIN_COST) {
         alert("Недостаточно валюты!");
         return;
     }
-    userData.balance -= SPIN_COST;
-    localStorage.setItem("users", JSON.stringify(users));
 
     spinSound.play();
     multiplier = 1;
     totalWin = 0;
     document.getElementById("multiplierText").textContent = `Множитель: ${multiplier}x`;
     document.getElementById("winText").textContent = `Выигрыш: ${totalWin}`;
-    document.getElementById("info-panel").querySelector("p:nth-child(3)").textContent = `Баланс: ${userData.balance}`;
 
     if (bonusSpins > 0) {
         bonusSpins--;
@@ -180,6 +183,7 @@ async function spinSlot() {
         document.getElementById("winText").textContent = `Выигрыш: ${totalWin}`;
         if (roundWin > 0) winSound.play();
     }
+    userData.balance -= SPIN_COST;
     userData.balance += totalWin;
-    localStorage.setItem("users", JSON.stringify(users));
+    await updateUserBalance(userData.balance);
 }
