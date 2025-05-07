@@ -9,11 +9,8 @@ let currentBonusAngle = 0;
 let currentMainAngle = 0;
 let isSpinning = false;
 let bonusMultiplier = 1;
-const currentUser = localStorage.getItem("currentUser");
 
-const bonusSegments = ["1x", "2x", "3x", "4x", "5x"];
-const mainSegments = [1, 5, 10, 20, 30, 40, "🐒", 60, 70, 80, 90, "🐘", 110, 120, 130, 140, 150, 160, 170, 180, 190, "💵"];
-const tooltip = document.getElementById("segmentTooltip");
+// Удаляем повторное объявление currentUser, так как оно уже есть в main.js
 
 async function checkLogin() {
     if (!currentUser) {
@@ -68,7 +65,13 @@ function showTooltip(element, text) {
         tooltip.textContent = text;
         tooltip.style.left = element.getBoundingClientRect().left + "px";
         tooltip.style.top = (element.getBoundingClientRect().top - 30) + "px";
+        tooltip.style.display = "block";
     }
+}
+
+function hideTooltip() {
+    const tooltip = document.getElementById("tooltip");
+    if (tooltip) tooltip.style.display = "none";
 }
 
 function showSegmentTooltip(x, y, text) {
@@ -87,7 +90,10 @@ function hideSegmentTooltip() {
 }
 
 function drawWheel(canvas, ctx, segments, currentAngle, wheelType, highlightSegment = -1, highlightScale = 1) {
-    if (!canvas || !ctx) return;
+    if (!canvas || !ctx) {
+        console.error("Canvas or context is not available:", canvas, ctx);
+        return;
+    }
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     const segmentCount = segments.length;
     const anglePerSegment = (2 * Math.PI) / segmentCount;
@@ -148,7 +154,7 @@ function drawWheel(canvas, ctx, segments, currentAngle, wheelType, highlightSegm
         ctx.fillRect(boxX, boxY, boxSize, boxSize);
 
         const rect = { x: boxX, y: boxY, width: boxSize, height: boxSize };
-        ctx.canvas.addEventListener("mousemove", (e) => {
+        canvas.addEventListener("mousemove", (e) => {
             const rectX = centerX + (rect.x * Math.cos(currentAngle) - rect.y * Math.sin(currentAngle));
             const rectY = centerY + (rect.x * Math.sin(currentAngle) + rect.y * Math.cos(currentAngle));
             const mouseX = e.clientX - canvas.getBoundingClientRect().left;
@@ -164,7 +170,10 @@ function drawWheel(canvas, ctx, segments, currentAngle, wheelType, highlightSegm
 }
 
 function spinWheel(canvas, ctx, segments, currentAngle, callback, wheelType) {
-    if (!canvas || !ctx || isSpinning) return;
+    if (!canvas || !ctx || isSpinning) {
+        console.error("Cannot spin wheel: canvas, context, or spinning state issue:", canvas, ctx, isSpinning);
+        return;
+    }
     isSpinning = true;
 
     const randomSpins = Math.floor(Math.random() * 5) + 3;
@@ -301,12 +310,41 @@ async function spinMain() {
     }
 }
 
+const bonusSegments = ["1x", "2x", "3x", "4x", "5x"];
+const mainSegments = [1, 5, 10, 20, 30, 40, "🐒", 60, 70, 80, 90, "🐘", 110, 120, 130, 140, 150, 160, 170, 180, 190, "💵"];
+
+// Делаем функции глобальными
+window.handleAccountClick = handleAccountClick;
+window.spinBonus = spinBonus;
+window.spinMain = spinMain;
+
 document.addEventListener("DOMContentLoaded", async () => {
+    // Привязываем события для кнопок
+    const bonusSpinBtn = document.getElementById("bonusSpinBtn");
+    const mainSpinBtn = document.getElementById("mainSpinBtn");
+    const accountButton = document.getElementById("accountButton");
+
+    if (bonusSpinBtn) bonusSpinBtn.addEventListener("click", spinBonus);
+    if (mainSpinBtn) mainSpinBtn.addEventListener("click", spinMain);
+    if (accountButton) accountButton.addEventListener("click", handleAccountClick);
+
+    // Привязываем события для validity-box
+    const validityBoxes = document.querySelectorAll(".validity-box");
+    validityBoxes.forEach(box => {
+        box.addEventListener("mouseover", () => {
+            const text = box.getAttribute("data-tooltip");
+            showTooltip(box, text);
+        });
+        box.addEventListener("mouseout", hideTooltip);
+    });
+
+    // Инициализация рулеток
     if (await checkLogin() && bonusCanvas && mainCanvas && bonusCtx && mainCtx) {
+        console.log("Инициализация рулеток...");
         drawWheel(bonusCanvas, bonusCtx, bonusSegments, currentBonusAngle, "bonus");
         drawWheel(mainCanvas, mainCtx, mainSegments, currentMainAngle, "main");
         await checkSpinCooldown();
     } else {
-        console.log("DOM elements not found or login failed");
+        console.error("Не удалось инициализировать рулетки: проблемы с логином или DOM элементами");
     }
 });

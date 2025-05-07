@@ -175,26 +175,26 @@
 <body>
     <div class="top-bar">
         <div class="stats-text" id="balanceTextSecondary">Баланс: [закрыто]</div>
-        <button id="accountButton" onclick="handleAccountClick()">Мой аккаунт</button>
+        <button id="accountButton">Мой аккаунт</button>
         <div class="stats-text" id="pointsTextSecondary">Поинты: [закрыто]</div>
     </div>
     <div class="validity-indicator" id="validityIndicator">
-        <div class="validity-box" style="background-color: #8B0000;" onmouseover="showTooltip(this, 'Самый низкий уровень валидности — минимальный выигрыш.')"></div>
-        <div class="validity-box" style="background-color: #A52A2A;" onmouseover="showTooltip(this, 'Низкий уровень валидности — небольшой выигрыш.')"></div>
-        <div class="validity-box" style="background-color: #CD5C5C;" onmouseover="showTooltip(this, 'Средний уровень валидности — средний выигрыш.')"></div>
-        <div class="validity-box" style="background-color: #F08080;" onmouseover="showTooltip(this, 'Высокий уровень валидности — хороший выигрыш.')"></div>
-        <div class="validity-box" style="background-color: #FF0000;" onmouseover="showTooltip(this, 'Самый высокий уровень валидности — максимальный выигрыш.')"></div>
+        <div class="validity-box" data-tooltip="Самый низкий уровень валидности — минимальный выигрыш." style="background-color: #8B0000;"></div>
+        <div class="validity-box" data-tooltip="Низкий уровень валидности — небольшой выигрыш." style="background-color: #A52A2A;"></div>
+        <div class="validity-box" data-tooltip="Средний уровень валидности — средний выигрыш." style="background-color: #CD5C5C;"></div>
+        <div class="validity-box" data-tooltip="Высокий уровень валидности — хороший выигрыш." style="background-color: #F08080;"></div>
+        <div class="validity-box" data-tooltip="Самый высокий уровень валидности — максимальный выигрыш." style="background-color: #FF0000;"></div>
         <div class="info-tooltip" id="tooltip"></div>
     </div>
     <div class="roulette-container">
         <div class="wheel-container bonus-wheel">
             <canvas id="bonusCanvas" width="400" height="400"></canvas>
-            <button id="bonusSpinBtn" onclick="spinBonus()">Прокрутить бонус</button>
+            <button id="bonusSpinBtn">Прокрутить бонус</button>
             <div class="result" id="bonusResult">Бонус: -</div>
         </div>
         <div class="wheel-container main-wheel">
             <canvas id="mainCanvas" width="400" height="400"></canvas>
-            <button id="mainSpinBtn" onclick="spinMain()" disabled>Прокрутить валюту</button>
+            <button id="mainSpinBtn" disabled>Прокрутить валюту</button>
             <div class="result" id="spinResult">Выигрыш: -</div>
             <div class="result" id="totalResult">Общий выигрыш: -</div>
         </div>
