@@ -9,42 +9,50 @@ let currentBonusAngle = 0;
 let currentMainAngle = 0;
 let isSpinning = false;
 let bonusMultiplier = 1;
-let lastSpinTime = null;
+const currentUser = localStorage.getItem("currentUser");
 
 const bonusSegments = ["1x", "2x", "3x", "4x", "5x"];
 const mainSegments = [1, 5, 10, 20, 30, 40, "🐒", 60, 70, 80, 90, "🐘", 110, 120, 130, 140, 150, 160, 170, 180, 190, "💵"];
 const tooltip = document.getElementById("segmentTooltip");
 
-function checkLogin() {
-    if (!localStorage.getItem("users")) {
-        localStorage.setItem("users", JSON.stringify({}));
-    }
-    const currentUser = localStorage.getItem("currentUser");
+async function checkLogin() {
     if (!currentUser) {
         alert("Войдите в аккаунт!");
-        window.location.href = "../index.html";
+        window.location.href = "index.html";
         return false;
     }
-    const users = JSON.parse(localStorage.getItem("users"));
-    if (!users[currentUser].isVerified) {
-        alert("Ваш аккаунт не верифицирован! Обратитесь к администратору.");
-        window.location.href = "../index.html";
+    try {
+        const userRef = window.dbRef(window.database, 'users/' + currentUser);
+        const snapshot = await window.dbGet(userRef);
+        const userData = snapshot.val();
+        if (!userData || !userData.isVerified) {
+            alert("Ваш аккаунт не верифицирован! Обратитесь к администратору.");
+            window.location.href = "index.html";
+            return false;
+        }
+        await updateUserInfo();
+        return true;
+    } catch (error) {
+        console.error("Ошибка проверки логина:", error);
         return false;
     }
-    updateUserInfo(currentUser);
-    return true;
 }
 
-function updateUserInfo(currentUser) {
-    const users = JSON.parse(localStorage.getItem("users"));
-    const userData = users[currentUser] || { balance: 0, points: 0 };
-    document.getElementById("balanceTextSecondary").textContent = "Баланс: " + userData.balance;
-    document.getElementById("pointsTextSecondary").textContent = "Поинты: " + userData.points;
+async function updateUserInfo() {
+    try {
+        const userRef = window.dbRef(window.database, 'users/' + currentUser);
+        const snapshot = await window.dbGet(userRef);
+        const userData = snapshot.val() || { balance: 0, points: 0 };
+        document.getElementById("balanceTextSecondary").textContent = "Баланс: " + userData.balance;
+        document.getElementById("pointsTextSecondary").textContent = "Поинты: " + userData.points;
+    } catch (error) {
+        console.error("Ошибка обновления информации:", error);
+    }
 }
 
 function handleAccountClick() {
-    if (!localStorage.getItem("currentUser")) {
-        window.location.href = "../index.html";
+    if (!currentUser) {
+        window.location.href = "index.html";
     } else {
         alert("Функция 'Мой аккаунт' пока не реализована полностью. Используйте главную страницу для профиля.");
     }
@@ -194,36 +202,41 @@ function spinWheel(canvas, ctx, segments, currentAngle, callback, wheelType) {
     requestAnimationFrame(animate);
 }
 
-function checkSpinCooldown() {
-    const users = JSON.parse(localStorage.getItem("users"));
-    const currentUser = localStorage.getItem("currentUser");
-    lastSpinTime = users[currentUser] ? users[currentUser].lastSpinTime : null;
+async function checkSpinCooldown() {
+    try {
+        const userRef = window.dbRef(window.database, 'users/' + currentUser);
+        const snapshot = await window.dbGet(userRef);
+        const userData = snapshot.val() || { lastSpinTime: null };
 
-    if (lastSpinTime) {
-        const now = new Date().getTime();
-        const timeDiff = (now - lastSpinTime) / (1000 * 60 * 60);
-        if (timeDiff < 6) {
-            const remaining = 6 - Math.floor(timeDiff);
-            document.getElementById("cooldownText").textContent = `Следующая прокрутка доступна через: ${remaining} часов`;
-            document.getElementById("bonusSpinBtn").disabled = true;
-            document.getElementById("bonusSpinBtn").classList.add("disabled");
-            document.getElementById("mainSpinBtn").disabled = true;
-            document.getElementById("mainSpinBtn").classList.add("disabled");
+        const lastSpinTime = userData.lastSpinTime;
+        if (lastSpinTime) {
+            const now = new Date().getTime();
+            const timeDiff = (now - lastSpinTime) / (1000 * 60 * 60);
+            if (timeDiff < 6) {
+                const remaining = 6 - Math.floor(timeDiff);
+                document.getElementById("cooldownText").textContent = `Следующая прокрутка доступна через: ${remaining} часов`;
+                document.getElementById("bonusSpinBtn").disabled = true;
+                document.getElementById("bonusSpinBtn").classList.add("disabled");
+                document.getElementById("mainSpinBtn").disabled = true;
+                document.getElementById("mainSpinBtn").classList.add("disabled");
+            } else {
+                document.getElementById("cooldownText").textContent = "Следующая прокрутка доступна через: -";
+                document.getElementById("bonusSpinBtn").disabled = false;
+                document.getElementById("bonusSpinBtn").classList.remove("disabled");
+            }
         } else {
             document.getElementById("cooldownText").textContent = "Следующая прокрутка доступна через: -";
             document.getElementById("bonusSpinBtn").disabled = false;
             document.getElementById("bonusSpinBtn").classList.remove("disabled");
         }
-    } else {
-        document.getElementById("cooldownText").textContent = "Следующая прокрутка доступна через: -";
-        document.getElementById("bonusSpinBtn").disabled = false;
-        document.getElementById("bonusSpinBtn").classList.remove("disabled");
+    } catch (error) {
+        console.error("Ошибка проверки времени спина:", error);
     }
 }
 
-function spinBonus() {
-    if (!checkLogin()) return;
-    spinWheel(bonusCanvas, bonusCtx, bonusSegments, currentBonusAngle, (finalAngle, segmentIndex) => {
+async function spinBonus() {
+    if (!await checkLogin()) return;
+    spinWheel(bonusCanvas, bonusCtx, bonusSegments, currentBonusAngle, async (finalAngle, segmentIndex) => {
         bonusMultiplier = parseInt(bonusSegments[segmentIndex].replace("x", ""));
         document.getElementById("bonusResult").textContent = `Бонус: ${bonusMultiplier}x`;
         currentBonusAngle = finalAngle;
@@ -234,9 +247,9 @@ function spinBonus() {
     }, "bonus");
 }
 
-function spinMain() {
-    const currentUser = localStorage.getItem("currentUser");
-    spinWheel(mainCanvas, mainCtx, mainSegments, currentMainAngle, (finalAngle, segmentIndex) => {
+async function spinMain() {
+    if (!await checkLogin()) return;
+    spinWheel(mainCanvas, mainCtx, mainSegments, currentMainAngle, async (finalAngle, segmentIndex) => {
         const win = mainSegments[segmentIndex];
         let displayWin = win;
         if (typeof win === "string") displayWin = win;
@@ -244,23 +257,31 @@ function spinMain() {
         const totalWin = typeof win === "string" ? parseInt(win.replace(/[^0-9]/g, "")) * bonusMultiplier : win * bonusMultiplier;
         document.getElementById("totalResult").textContent = `Общий выигрыш: ${totalWin}`;
 
-        const users = JSON.parse(localStorage.getItem("users"));
-        users[currentUser].balance = (users[currentUser].balance || 0) + totalWin;
-        users[currentUser].lastSpinTime = new Date().getTime();
-        localStorage.setItem("users", JSON.stringify(users));
-        updateUserInfo(currentUser);
+        try {
+            const userRef = window.dbRef(window.database, 'users/' + currentUser);
+            const snapshot = await window.dbGet(userRef);
+            const userData = snapshot.val() || { balance: 0 };
+            const newBalance = userData.balance + totalWin;
+            await window.dbUpdate(userRef, { balance: newBalance, lastSpinTime: new Date().getTime() });
+            await updateUserInfo();
+        } catch (error) {
+            console.error("Ошибка обновления баланса:", error);
+            alert("Ошибка при обновлении баланса!");
+        }
 
         currentMainAngle = finalAngle;
         document.getElementById("bonusSpinBtn").disabled = true;
         document.getElementById("bonusSpinBtn").classList.add("disabled");
         document.getElementById("mainSpinBtn").disabled = true;
         document.getElementById("mainSpinBtn").classList.add("disabled");
-        checkSpinCooldown();
+        await checkSpinCooldown();
     }, "main");
 }
 
-if (checkLogin()) {
-    drawWheel(bonusCanvas, bonusCtx, bonusSegments, currentBonusAngle, "bonus");
-    drawWheel(mainCanvas, mainCtx, mainSegments, currentMainAngle, "main");
-    checkSpinCooldown();
-}
+document.addEventListener("DOMContentLoaded", async () => {
+    if (await checkLogin()) {
+        drawWheel(bonusCanvas, bonusCtx, bonusSegments, currentBonusAngle, "bonus");
+        drawWheel(mainCanvas, mainCtx, mainSegments, currentMainAngle, "main");
+        await checkSpinCooldown();
+    }
+});
