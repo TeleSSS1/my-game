@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gates of Azamats</title>
-    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="style.css">
     <style>
         .slot-container {
             display: flex;
@@ -49,14 +49,13 @@
         .bonus-info { font-size: 20px; margin-bottom: 10px; color: #FFD700; display: none; }
         .spin-button { background-color: #4CAF50; color: white; padding: 15px 32px; text-align: center; font-size: 16px; margin: 10px; cursor: pointer; border: none; border-radius: 5px; }
         .spin-button:hover { background-color: #3e8e41; }
-        audio { display: none; }
         .info-panel { display: flex; justify-content: space-between; width: 100%; padding: 10px; background-color: #1a1a1a; border-radius: 5px; }
         .info-panel p { margin: 0 10px; }
     </style>
 </head>
 <body>
     <div class="slot-container">
-        <div class="info-panel">
+        <div class="info-panel" id="info-panel">
             <p>Ставка: 10</p>
             <p>Выигрыш: 0</p>
             <p>Баланс: [закрыто]</p>
@@ -66,12 +65,34 @@
         <div class="bonus-info" id="bonusInfo">Бонусные спины: <span id="bonusSpinsCount">0</span></div>
         <button class="spin-button" onclick="spinSlot()">Крутить</button>
         <p class="win-text" id="winText">Выигрыш: 0</p>
-        <audio id="spinSound" src="../sounds/spin.mp3"></audio>
-        <audio id="winSound" src="../sounds/win.mp3"></audio>
-        <audio id="clusterSound" src="../sounds/cluster.mp3"></audio>
-        <audio id="multiplierSound" src="../sounds/multiplier.mp3"></audio>
-        <audio id="bonusSound" src="../sounds/bonus.mp3"></audio>
     </div>
-    <script src="../js/gates.js"></script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getDatabase, ref, get, update } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyD3w3MpCX-3r-VZKVHIJf6Ia7DqcQ",
+            authDomain: "gameforfriends-7789f.firebaseapp.com",
+            databaseURL: "https://gameforfriends-7789f-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "gameforfriends-7789f",
+            storageBucket: "gameforfriends-7789f.appspot.com",
+            messagingSenderId: "36922585094",
+            appId: "1:36922585094:web:f7e41641f6aa1996d914d",
+            measurementId: "G-3X19GXGZ"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        window.database = getDatabase(app);
+        window.dbRef = ref;
+        window.dbGet = get;
+        window.dbUpdate = update;
+
+        // Подключение gates.js
+        import('./gates.js').then(module => {
+            console.log("gates.js загружен успешно");
+        }).catch(error => {
+            console.error("Ошибка загрузки gates.js:", error);
+        });
+    </script>
 </body>
 </html>

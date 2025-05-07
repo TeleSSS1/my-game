@@ -8,12 +8,6 @@ let totalWin = 0;
 let bonusSpins = 0;
 const SPIN_COST = 10;
 
-const spinSound = document.getElementById("spinSound");
-const winSound = document.getElementById("winSound");
-const clusterSound = document.getElementById("clusterSound");
-const multiplierSound = document.getElementById("multiplierSound");
-const bonusSound = document.getElementById("bonusSound");
-
 function checkLogin() {
     const currentUser = localStorage.getItem("currentUser");
     if (!currentUser) {
@@ -86,9 +80,8 @@ function removeClusters(clusters) {
         for (const cell of cluster) {
             const gridCell = document.getElementById("slotGrid").children[cell.row * GRID_WIDTH + cell.col];
             gridCell.classList.add("destroyed");
-            grid[cell.row][cell.col] = "";
+            grid[cell.row][col] = "";
         }
-        clusterSound.play();
     }
     setTimeout(dropSymbols, 500);
 }
@@ -130,11 +123,9 @@ function addMultiplier() {
         multiplier *= Math.floor(Math.random() * (10 - 2 + 1)) + 2; // 2x to 10x
     }
     document.getElementById("multiplierText").textContent = `Множитель: ${multiplier}x`;
-    multiplierSound.play();
 }
 
 function triggerBonusSpins() {
-    bonusSound.play();
     bonusSpins = 15;
     document.getElementById("bonusInfo").style.display = "block";
     document.getElementById("bonusSpinsCount").textContent = bonusSpins;
@@ -149,7 +140,6 @@ async function spinSlot() {
         return;
     }
 
-    spinSound.play();
     multiplier = 1;
     totalWin = 0;
     document.getElementById("multiplierText").textContent = `Множитель: ${multiplier}x`;
@@ -181,7 +171,6 @@ async function spinSlot() {
         for (const cluster of clusters) roundWin += cluster.length * SPIN_COST;
         totalWin += roundWin * multiplier;
         document.getElementById("winText").textContent = `Выигрыш: ${totalWin}`;
-        if (roundWin > 0) winSound.play();
     }
     userData.balance -= SPIN_COST;
     userData.balance += totalWin;
