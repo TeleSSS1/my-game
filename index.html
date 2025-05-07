@@ -23,7 +23,6 @@
         const app = initializeApp(firebaseConfig);
         const database = getDatabase(app);
 
-        // Делаем доступными глобальные переменные и функции
         window.database = database;
         window.dbRef = ref;
         window.dbGet = get;
@@ -95,6 +94,8 @@
     </div>
     <div id="gameGrid" style="display: none;">
         <button onclick="showRoulette()">Рулетка</button>
+        <button onclick="showGatesOfAzamats()">Gates of Azamats</button>
+        <button style="visibility: hidden;">Пусто</button>
     </div>
 
     <div id="gameForm" style="display: none;">

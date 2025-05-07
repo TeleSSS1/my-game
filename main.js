@@ -3,10 +3,8 @@ let isAdmin = false;
 let lastSpinTime = localStorage.getItem("lastSpinTime");
 let isLogin = true;
 
-// Закодированный пароль в base64 для "3gh5vd43gyy6"
 const ADMIN_PASS_ENCODED = "M2doNXZkNDNneXk2";
 
-// Простая функция декодирования base64
 function decodePass(encoded) {
     return atob(encoded);
 }
@@ -58,10 +56,30 @@ async function showRoulette() {
             alert("Ваш аккаунт не верифицирован! Обратитесь к администратору.");
             return;
         }
-        window.location.href = "roulette.html"; // Путь к файлу в корне
+        window.location.href = "roulette.html";
     } catch (error) {
         console.error("Ошибка в showRoulette:", error);
         alert("Ошибка при открытии рулетки!");
+    }
+}
+
+async function showGatesOfAzamats() {
+    if (!currentUser) {
+        alert("Войдите в аккаунт!");
+        return;
+    }
+    try {
+        const userRef = window.dbRef(window.database, 'users/' + currentUser);
+        const snapshot = await window.dbGet(userRef);
+        const userData = snapshot.val();
+        if (!userData || !userData.isVerified) {
+            alert("Ваш аккаунт не верифицирован! Обратитесь к администратору.");
+            return;
+        }
+        window.location.href = "gates.html";
+    } catch (error) {
+        console.error("Ошибка в showGatesOfAzamats:", error);
+        alert("Ошибка при открытии Gates of Azamats!");
     }
 }
 
