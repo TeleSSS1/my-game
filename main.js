@@ -28,6 +28,10 @@ async function showGamesSection() {
         document.getElementById("gameGrid").style.display = "grid";
         document.getElementById("gameSectionHeader").style.display = "block";
         document.getElementById("adminButton").style.display = "none";
+        document.getElementById("balanceTextSecondary").textContent = "Баланс: " + userData.balance;
+        document.getElementById("balanceTextSecondary").classList.remove("blurred");
+        document.getElementById("pointsTextSecondary").textContent = "Поинты: " + userData.points;
+        document.getElementById("pointsTextSecondary").classList.remove("blurred");
     } catch (error) {
         console.error("Ошибка в showGamesSection:", error);
         alert("Ошибка при загрузке игр!");
@@ -54,7 +58,7 @@ async function showRoulette() {
             alert("Ваш аккаунт не верифицирован! Обратитесь к администратору.");
             return;
         }
-        window.location.href = "games/roulette.html";
+        window.location.href = "roulette.html"; // Исправляем путь на правильный файл
     } catch (error) {
         console.error("Ошибка в showRoulette:", error);
         alert("Ошибка при открытии рулетки!");
@@ -71,75 +75,6 @@ function closeGame() {
     document.getElementById("gameForm").style.display = "none";
     document.getElementById("adminButton").style.display = "block";
     backToMain();
-}
-
-function checkSpinCooldown() {
-    try {
-        const cooldownText = document.getElementById("cooldownText");
-        const bonusSpinBtn = document.getElementById("bonusSpinBtn");
-        const mainSpinBtn = document.getElementById("mainSpinBtn");
-        if (!cooldownText || !bonusSpinBtn || !mainSpinBtn) return;
-
-        if (lastSpinTime) {
-            const now = new Date().getTime();
-            const timeDiff = (now - lastSpinTime) / (1000 * 60 * 60);
-            if (timeDiff < 6) {
-                const remaining = 6 - Math.floor(timeDiff);
-                cooldownText.textContent = `Следующая прокрутка доступна через: ${remaining} часов`;
-                bonusSpinBtn.disabled = true;
-                mainSpinBtn.disabled = true;
-            } else {
-                cooldownText.textContent = "Следующая прокрутка доступна через: -";
-                bonusSpinBtn.disabled = false;
-            }
-        } else {
-            cooldownText.textContent = "Следующая прокрутка доступна через: -";
-            bonusSpinBtn.disabled = false;
-        }
-    } catch (error) {
-        console.error("Ошибка в checkSpinCooldown:", error);
-    }
-}
-
-function spinBonus() {
-    try {
-        const bonusValues = [1, 2, 3, 4, 5];
-        const bonus = bonusValues[Math.floor(Math.random() * bonusValues.length)];
-        document.getElementById("bonusResult").textContent = `Бонус: ${bonus}x`;
-        document.getElementById("mainSpinBtn").disabled = false;
-    } catch (error) {
-        console.error("Ошибка в spinBonus:", error);
-    }
-}
-
-async function spinMain() {
-    try {
-        const mainValues = [1, 5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200];
-        let result = mainValues[Math.floor(Math.random() * mainValues.length)];
-        let emoji = "";
-        if (result === 50) emoji = " 🐒";
-        else if (result === 100) emoji = " 🐘";
-        else if (result === 200) emoji = " 💵";
-        document.getElementById("spinResult").textContent = `Выигрыш: ${result}${emoji}`;
-        const bonus = parseInt(document.getElementById("bonusResult").textContent.replace("Бонус: ", "").replace("x", ""));
-        const totalWin = result * bonus;
-
-        const userRef = window.dbRef(window.database, 'users/' + currentUser);
-        const snapshot = await window.dbGet(userRef);
-        const userData = snapshot.val() || { balance: 0, points: 0, isVerified: false };
-        const newBalance = userData.balance + totalWin;
-        await window.dbUpdate(userRef, { balance: newBalance });
-
-        updateUserInfo();
-        lastSpinTime = new Date().getTime();
-        localStorage.setItem("lastSpinTime", lastSpinTime);
-        document.getElementById("bonusSpinBtn").disabled = true;
-        document.getElementById("mainSpinBtn").disabled = true;
-        checkSpinCooldown();
-    } catch (error) {
-        console.error("Ошибка в spinMain:", error);
-        alert("Ошибка при прокрутке!");
-    }
 }
 
 function showAuth() {
@@ -199,6 +134,7 @@ async function showProfile() {
             : "Верифицирован: <span class='unverified-icon'>✖</span>";
         document.getElementById("profileForm").style.display = "block";
         document.getElementById("adminButton").style.display = "none";
+        await updateUserInfo();
     } catch (error) {
         console.error("Ошибка в showProfile:", error);
         alert("Ошибка при загрузке профиля!");
@@ -306,7 +242,7 @@ async function updateBalance() {
         await window.dbUpdate(userRef, { balance: newBalance });
         document.getElementById("playerBalance").textContent = "Валюта: " + newBalance;
         document.getElementById("newBalance").value = "";
-        if (selectedUser === currentUser) updateUserInfo();
+        if (selectedUser === currentUser) await updateUserInfo();
     } catch (error) {
         console.error("Ошибка в updateBalance:", error);
         alert("Ошибка при обновлении валюты!");
@@ -331,7 +267,7 @@ async function updatePoints() {
         await window.dbUpdate(userRef, { points: newPoints });
         document.getElementById("playerPoints").textContent = "Поинты: " + newPoints;
         document.getElementById("newPoints").value = "";
-        if (selectedUser === currentUser) updateUserInfo();
+        if (selectedUser === currentUser) await updateUserInfo();
     } catch (error) {
         console.error("Ошибка в updatePoints:", error);
         alert("Ошибка при обновлении поинтов!");
@@ -352,6 +288,7 @@ async function verifyPlayer(verify) {
             ? "Верифицирован: <span class='verified-icon'>✔</span>" 
             : "Верифицирован: <span class='unverified-icon'>✖</span>";
         alert(`Верификация для ${selectedUser} ${verify ? "подтверждена" : "отклонена"}!`);
+        if (selectedUser === currentUser) await updateUserInfo();
     } catch (error) {
         console.error("Ошибка в verifyPlayer:", error);
         alert("Ошибка при верификации!");
@@ -360,38 +297,48 @@ async function verifyPlayer(verify) {
 
 async function updateUserInfo() {
     try {
+        const avatarElement = document.getElementById("avatar");
+        const loginTextElement = document.getElementById("loginText");
+        const balanceTextElement = document.getElementById("balanceText");
+        const pointsTextElement = document.getElementById("pointsText");
+        const accountButtonElement = document.getElementById("accountButton");
+        const balanceTextSecondaryElement = document.getElementById("balanceTextSecondary");
+        const pointsTextSecondaryElement = document.getElementById("pointsTextSecondary");
+
         if (currentUser) {
             const userRef = window.dbRef(window.database, 'users/' + currentUser);
             const snapshot = await window.dbGet(userRef);
             const userData = snapshot.val() || { balance: 0, points: 0, isVerified: false };
-            document.getElementById("avatar").textContent = "🧑";
-            document.getElementById("loginText").textContent = "Логин: " + currentUser;
-            document.getElementById("loginText").classList.remove("blurred");
-            document.getElementById("balanceText").textContent = "Баланс: " + userData.balance;
-            document.getElementById("balanceText").classList.remove("blurred");
-            document.getElementById("pointsText").textContent = "Поинты: " + userData.points;
-            document.getElementById("pointsText").classList.remove("blurred");
-            document.getElementById("accountButton").textContent = "Мой аккаунт";
-            document.getElementById("balanceTextSecondary").textContent = "Баланс: " + userData.balance;
-            document.getElementById("balanceTextSecondary").classList.remove("blurred");
-            document.getElementById("pointsTextSecondary").textContent = "Поинты: " + userData.points;
-            document.getElementById("pointsTextSecondary").classList.remove("blurred");
+
+            avatarElement.textContent = "🧑";
+            loginTextElement.textContent = "Логин: " + currentUser;
+            loginTextElement.classList.remove("blurred");
+            balanceTextElement.textContent = "Баланс: " + userData.balance;
+            balanceTextElement.classList.remove("blurred");
+            pointsTextElement.textContent = "Поинты: " + userData.points;
+            pointsTextElement.classList.remove("blurred");
+            accountButtonElement.textContent = "Мой аккаунт";
+            balanceTextSecondaryElement.textContent = "Баланс: " + userData.balance;
+            balanceTextSecondaryElement.classList.remove("blurred");
+            pointsTextSecondaryElement.textContent = "Поинты: " + userData.points;
+            pointsTextSecondaryElement.classList.remove("blurred");
         } else {
-            document.getElementById("avatar").textContent = "🕵️";
-            document.getElementById("loginText").textContent = "Логин: [закрыто]";
-            document.getElementById("loginText").classList.add("blurred");
-            document.getElementById("balanceText").textContent = "Баланс: [закрыто]";
-            document.getElementById("balanceText").classList.add("blurred");
-            document.getElementById("pointsText").textContent = "Поинты: [закрыто]";
-            document.getElementById("pointsText").classList.add("blurred");
-            document.getElementById("accountButton").textContent = "Вход/Регистрация";
-            document.getElementById("balanceTextSecondary").textContent = "Баланс: [закрыто]";
-            document.getElementById("balanceTextSecondary").classList.add("blurred");
-            document.getElementById("pointsTextSecondary").textContent = "Поинты: [закрыто]";
-            document.getElementById("pointsTextSecondary").classList.add("blurred");
+            avatarElement.textContent = "🕵️";
+            loginTextElement.textContent = "Логин: [закрыто]";
+            loginTextElement.classList.add("blurred");
+            balanceTextElement.textContent = "Баланс: [закрыто]";
+            balanceTextElement.classList.add("blurred");
+            pointsTextElement.textContent = "Поинты: [закрыто]";
+            pointsTextElement.classList.add("blurred");
+            accountButtonElement.textContent = "Вход/Регистрация";
+            balanceTextSecondaryElement.textContent = "Баланс: [закрыто]";
+            balanceTextSecondaryElement.classList.add("blurred");
+            pointsTextSecondaryElement.textContent = "Поинты: [закрыто]";
+            pointsTextSecondaryElement.classList.add("blurred");
         }
     } catch (error) {
         console.error("Ошибка в updateUserInfo:", error);
+        alert("Ошибка при обновлении информации пользователя!");
     }
 }
 
@@ -413,7 +360,7 @@ async function handleAuth() {
                 alert("Вход выполнен: " + username);
                 currentUser = username;
                 localStorage.setItem("currentUser", currentUser);
-                updateUserInfo();
+                await updateUserInfo();
                 closeAuth();
             } else {
                 console.log("Вход неуспешный:", username);
@@ -430,13 +377,14 @@ async function handleAuth() {
                     password: password,
                     balance: 0,
                     points: 0,
-                    isVerified: false
+                    isVerified: false,
+                    lastSpinTime: null
                 });
                 console.log("Регистрация успешна:", username);
                 alert("Регистрация выполнена: " + username);
                 currentUser = username;
                 localStorage.setItem("currentUser", currentUser);
-                updateUserInfo();
+                await updateUserInfo();
                 closeAuth();
             }
         }
@@ -450,5 +398,4 @@ function showShop() {
     alert("Переход к Магазину");
 }
 
-// Инициализация
-updateUserInfo();
+document.addEventListener("DOMContentLoaded", updateUserInfo);
