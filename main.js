@@ -17,7 +17,8 @@ async function showGamesSection() {
         return;
     }
     try {
-        const snapshot = await window.database.ref('users/' + currentUser).once('value');
+        const userRef = window.dbRef(window.database, 'users/' + currentUser);
+        const snapshot = await window.dbGet(userRef);
         const userData = snapshot.val();
         if (!userData || !userData.isVerified) {
             alert("Ваш аккаунт не верифицирован! Обратитесь к администратору.");
@@ -46,7 +47,8 @@ async function showRoulette() {
         return;
     }
     try {
-        const snapshot = await window.database.ref('users/' + currentUser).once('value');
+        const userRef = window.dbRef(window.database, 'users/' + currentUser);
+        const snapshot = await window.dbGet(userRef);
         const userData = snapshot.val();
         if (!userData || !userData.isVerified) {
             alert("Ваш аккаунт не верифицирован! Обратитесь к администратору.");
@@ -122,10 +124,11 @@ async function spinMain() {
         const bonus = parseInt(document.getElementById("bonusResult").textContent.replace("Бонус: ", "").replace("x", ""));
         const totalWin = result * bonus;
 
-        const snapshot = await window.database.ref('users/' + currentUser).once('value');
+        const userRef = window.dbRef(window.database, 'users/' + currentUser);
+        const snapshot = await window.dbGet(userRef);
         const userData = snapshot.val() || { balance: 0, points: 0, isVerified: false };
         const newBalance = userData.balance + totalWin;
-        await window.database.ref('users/' + currentUser).update({ balance: newBalance });
+        await window.dbUpdate(userRef, { balance: newBalance });
 
         updateUserInfo();
         lastSpinTime = new Date().getTime();
@@ -182,7 +185,8 @@ function handleAccountClick() {
 
 async function showProfile() {
     try {
-        const snapshot = await window.database.ref('users/' + currentUser).once('value');
+        const userRef = window.dbRef(window.database, 'users/' + currentUser);
+        const snapshot = await window.dbGet(userRef);
         const userData = snapshot.val() || { balance: 0, points: 0, isVerified: false };
         const spins = Math.floor(userData.balance / 10);
 
@@ -233,7 +237,8 @@ function handleAdminLogin() {
 
 async function showAdminPanel() {
     try {
-        const snapshot = await window.database.ref('users').once('value');
+        const usersRef = window.dbRef(window.database, 'users');
+        const snapshot = await window.dbGet(usersRef);
         const users = snapshot.val() || {};
         const playerSelect = document.getElementById("playerSelect");
         playerSelect.innerHTML = '<option value="">Выберите игрока</option>';
@@ -267,7 +272,8 @@ async function updatePlayerInfo() {
     const selectedUser = document.getElementById("playerSelect").value;
     if (selectedUser) {
         try {
-            const snapshot = await window.database.ref('users/' + selectedUser).once('value');
+            const userRef = window.dbRef(window.database, 'users/' + selectedUser);
+            const snapshot = await window.dbGet(userRef);
             const userData = snapshot.val() || { balance: 0, points: 0, isVerified: false };
             document.getElementById("playerBalance").textContent = "Валюта: " + userData.balance;
             document.getElementById("playerPoints").textContent = "Поинты: " + userData.points;
@@ -298,7 +304,8 @@ async function updateBalance() {
     }
 
     try {
-        await window.database.ref('users/' + selectedUser).update({ balance: newBalance });
+        const userRef = window.dbRef(window.database, 'users/' + selectedUser);
+        await window.dbUpdate(userRef, { balance: newBalance });
         document.getElementById("playerBalance").textContent = "Валюта: " + newBalance;
         document.getElementById("newBalance").value = "";
         if (selectedUser === currentUser) updateUserInfo();
@@ -322,7 +329,8 @@ async function updatePoints() {
     }
 
     try {
-        await window.database.ref('users/' + selectedUser).update({ points: newPoints });
+        const userRef = window.dbRef(window.database, 'users/' + selectedUser);
+        await window.dbUpdate(userRef, { points: newPoints });
         document.getElementById("playerPoints").textContent = "Поинты: " + newPoints;
         document.getElementById("newPoints").value = "";
         if (selectedUser === currentUser) updateUserInfo();
@@ -340,7 +348,8 @@ async function verifyPlayer(verify) {
     }
 
     try {
-        await window.database.ref('users/' + selectedUser).update({ isVerified: verify });
+        const userRef = window.dbRef(window.database, 'users/' + selectedUser);
+        await window.dbUpdate(userRef, { isVerified: verify });
         document.getElementById("playerVerified").innerHTML = verify 
             ? "Верифицирован: <span class='verified-icon'>✔</span>" 
             : "Верифицирован: <span class='unverified-icon'>✖</span>";
@@ -354,7 +363,8 @@ async function verifyPlayer(verify) {
 async function updateUserInfo() {
     try {
         if (currentUser) {
-            const snapshot = await window.database.ref('users/' + currentUser).once('value');
+            const userRef = window.dbRef(window.database, 'users/' + currentUser);
+            const snapshot = await window.dbGet(userRef);
             const userData = snapshot.val() || { balance: 0, points: 0, isVerified: false };
             document.getElementById("avatar").textContent = "🧑";
             document.getElementById("loginText").textContent = "Логин: " + currentUser;
@@ -397,7 +407,8 @@ async function handleAuth() {
 
     try {
         if (isLogin) {
-            const snapshot = await window.database.ref('users/' + username).once('value');
+            const userRef = window.dbRef(window.database, 'users/' + username);
+            const snapshot = await window.dbGet(userRef);
             const userData = snapshot.val();
             if (userData && userData.password === password) {
                 console.log("Вход успешен:", username);
@@ -411,12 +422,13 @@ async function handleAuth() {
                 alert("Неверное имя пользователя или пароль!");
             }
         } else {
-            const snapshot = await window.database.ref('users/' + username).once('value');
+            const userRef = window.dbRef(window.database, 'users/' + username);
+            const snapshot = await window.dbGet(userRef);
             if (snapshot.exists()) {
                 console.log("Регистрация неуспешна: пользователь уже существует", username);
                 alert("Пользователь уже существует!");
             } else {
-                await window.database.ref('users/' + username).set({
+                await window.dbSet(userRef, {
                     password: password,
                     balance: 0,
                     points: 0,

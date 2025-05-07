@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="style.css">
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getDatabase } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
+        import { getDatabase, ref, get, set, update } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyD3w3MpCX-3r-VZKVHIJf6Ia7DqcQ",
@@ -21,7 +21,14 @@
         };
 
         const app = initializeApp(firebaseConfig);
-        window.database = getDatabase(app); // Делаем database глобальной переменной
+        const database = getDatabase(app);
+
+        // Делаем database и функции доступными глобально
+        window.database = database;
+        window.dbRef = ref;
+        window.dbGet = get;
+        window.dbSet = set;
+        window.dbUpdate = update;
     </script>
 </head>
 <body>
