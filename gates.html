@@ -1,10 +1,9 @@
 <!DOCTYPE html>
 <html lang="ru">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gates of Olympus</title>
+    <title>Gates of Azamats</title>
     <link rel="stylesheet" href="../css/style.css">
     <style>
         .slot-container {
@@ -12,9 +11,8 @@
             flex-direction: column;
             align-items: center;
             margin-top: 50px;
-            position: relative; /* Для позиционирования звуковых элементов */
+            position: relative;
         }
-
         .slot-grid {
             display: grid;
             grid-template-columns: repeat(6, 80px);
@@ -23,8 +21,8 @@
             background-color: #2a2a2a;
             padding: 10px;
             border-radius: 10px;
+            border: 2px solid #FFD700;
         }
-
         .slot-cell {
             width: 80px;
             height: 80px;
@@ -34,84 +32,46 @@
             align-items: center;
             font-size: 40px;
             border-radius: 5px;
-            animation: drop 0.5s ease-in-out; /* Добавлена анимация */
+            animation: drop 0.5s ease-in-out;
         }
-
         @keyframes drop {
-            from {
-                transform: translateY(-100%);
-                opacity: 0;
-            }
-
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
+            from { transform: translateY(-100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
         }
-
-        .multiplier {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            font-size: 24px;
-            color: #FFD700;
+        @keyframes destroy {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.5; }
+            100% { transform: scale(0); opacity: 0; }
         }
-
-        .win-text {
-            margin-top: 20px;
-            font-size: 24px;
-            color: #FFD700;
-        }
-
-        .bonus-info {
-            font-size: 20px;
-            margin-bottom: 10px;
-            color: #FFD700;
-            display: none; /* Скрываем изначально */
-        }
-
-        .spin-button {
-            /* Стили для кнопки спина, чтобы отличалась */
-            background-color: #4CAF50;
-            color: white;
-            padding: 15px 32px;
-            text-align: center;
-            text-decoration: none;
-            display: inline-block;
-            font-size: 16px;
-            margin: 10px;
-            cursor: pointer;
-            border: none;
-            border-radius: 5px;
-        }
-
-        .spin-button:hover {
-            background-color: #3e8e41;
-        }
-
-        /* Стили для звуковых элементов (скрываем) */
-        audio {
-            display: none;
-        }
+        .destroyed { animation: destroy 0.5s forwards; }
+        .multiplier { position: absolute; top: 20px; left: 20px; font-size: 24px; color: #FFD700; }
+        .win-text { margin-top: 20px; font-size: 24px; color: #FFD700; }
+        .bonus-info { font-size: 20px; margin-bottom: 10px; color: #FFD700; display: none; }
+        .spin-button { background-color: #4CAF50; color: white; padding: 15px 32px; text-align: center; font-size: 16px; margin: 10px; cursor: pointer; border: none; border-radius: 5px; }
+        .spin-button:hover { background-color: #3e8e41; }
+        audio { display: none; }
+        .info-panel { display: flex; justify-content: space-between; width: 100%; padding: 10px; background-color: #1a1a1a; border-radius: 5px; }
+        .info-panel p { margin: 0 10px; }
     </style>
 </head>
-
 <body>
     <div class="slot-container">
+        <div class="info-panel">
+            <p>Ставка: 10</p>
+            <p>Выигрыш: 0</p>
+            <p>Баланс: [закрыто]</p>
+        </div>
         <div class="multiplier" id="multiplierText">Множитель: 1x</div>
         <div class="slot-grid" id="slotGrid"></div>
         <div class="bonus-info" id="bonusInfo">Бонусные спины: <span id="bonusSpinsCount">0</span></div>
         <button class="spin-button" onclick="spinSlot()">Крутить</button>
         <p class="win-text" id="winText">Выигрыш: 0</p>
-
         <audio id="spinSound" src="../sounds/spin.mp3"></audio>
         <audio id="winSound" src="../sounds/win.mp3"></audio>
         <audio id="clusterSound" src="../sounds/cluster.mp3"></audio>
         <audio id="multiplierSound" src="../sounds/multiplier.mp3"></audio>
         <audio id="bonusSound" src="../sounds/bonus.mp3"></audio>
     </div>
-
     <script src="../js/gates.js"></script>
 </body>
-
 </html>
