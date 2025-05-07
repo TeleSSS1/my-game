@@ -253,8 +253,6 @@ async function showAdminPanel() {
         document.getElementById("playerBalance").textContent = "Валюта: 0";
         document.getElementById("playerPoints").textContent = "Поинты: 0";
         document.getElementById("playerVerified").innerHTML = "Верифицирован: <span class='unverified-icon'>✖</span>";
-        document.getElementById("newBalance").value = "";
-        document.getElementById("newPoints").value = "";
         document.getElementById("adminPanel").style.display = "block";
     } catch (error) {
         console.error("Ошибка в showAdminPanel:", error);
@@ -418,7 +416,7 @@ async function handleAuth() {
                 updateUserInfo();
                 closeAuth();
             } else {
-                console.log("Вход неуспешен:", username);
+                console.log("Вход неуспешный:", username);
                 alert("Неверное имя пользователя или пароль!");
             }
         } else {
