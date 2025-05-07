@@ -1,10 +1,10 @@
 const bonusCanvas = document.getElementById("bonusCanvas");
 const mainCanvas = document.getElementById("mainCanvas");
-const bonusCtx = bonusCanvas.getContext("2d");
-const mainCtx = mainCanvas.getContext("2d");
-const centerX = bonusCanvas.width / 2;
-const centerY = bonusCanvas.height / 2;
-const radius = bonusCanvas.width / 2 - 10;
+const bonusCtx = bonusCanvas ? bonusCanvas.getContext("2d") : null;
+const mainCtx = mainCanvas ? mainCanvas.getContext("2d") : null;
+const centerX = bonusCanvas ? bonusCanvas.width / 2 : 200;
+const centerY = bonusCanvas ? bonusCanvas.height / 2 : 200;
+const radius = bonusCanvas ? bonusCanvas.width / 2 - 10 : 190;
 let currentBonusAngle = 0;
 let currentMainAngle = 0;
 let isSpinning = false;
@@ -39,14 +39,18 @@ async function checkLogin() {
 }
 
 async function updateUserInfo() {
-    try {
-        const userRef = window.dbRef(window.database, 'users/' + currentUser);
-        const snapshot = await window.dbGet(userRef);
-        const userData = snapshot.val() || { balance: 0, points: 0 };
-        document.getElementById("balanceTextSecondary").textContent = "Баланс: " + userData.balance;
-        document.getElementById("pointsTextSecondary").textContent = "Поинты: " + userData.points;
-    } catch (error) {
-        console.error("Ошибка обновления информации:", error);
+    const balanceTextSecondary = document.getElementById("balanceTextSecondary");
+    const pointsTextSecondary = document.getElementById("pointsTextSecondary");
+    if (balanceTextSecondary && pointsTextSecondary) {
+        try {
+            const userRef = window.dbRef(window.database, 'users/' + currentUser);
+            const snapshot = await window.dbGet(userRef);
+            const userData = snapshot.val() || { balance: 0, points: 0 };
+            balanceTextSecondary.textContent = "Баланс: " + userData.balance;
+            pointsTextSecondary.textContent = "Поинты: " + userData.points;
+        } catch (error) {
+            console.error("Ошибка обновления информации:", error);
+        }
     }
 }
 
@@ -60,23 +64,30 @@ function handleAccountClick() {
 
 function showTooltip(element, text) {
     const tooltip = document.getElementById("tooltip");
-    tooltip.textContent = text;
-    tooltip.style.left = element.getBoundingClientRect().left + "px";
-    tooltip.style.top = (element.getBoundingClientRect().top - 30) + "px";
+    if (tooltip) {
+        tooltip.textContent = text;
+        tooltip.style.left = element.getBoundingClientRect().left + "px";
+        tooltip.style.top = (element.getBoundingClientRect().top - 30) + "px";
+    }
 }
 
 function showSegmentTooltip(x, y, text) {
-    tooltip.style.left = x + "px";
-    tooltip.style.top = y + "px";
-    tooltip.textContent = text;
-    tooltip.style.display = "block";
+    const tooltip = document.getElementById("segmentTooltip");
+    if (tooltip) {
+        tooltip.style.left = x + "px";
+        tooltip.style.top = y + "px";
+        tooltip.textContent = text;
+        tooltip.style.display = "block";
+    }
 }
 
 function hideSegmentTooltip() {
-    tooltip.style.display = "none";
+    const tooltip = document.getElementById("segmentTooltip");
+    if (tooltip) tooltip.style.display = "none";
 }
 
 function drawWheel(canvas, ctx, segments, currentAngle, wheelType, highlightSegment = -1, highlightScale = 1) {
+    if (!canvas || !ctx) return;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     const segmentCount = segments.length;
     const anglePerSegment = (2 * Math.PI) / segmentCount;
@@ -153,7 +164,7 @@ function drawWheel(canvas, ctx, segments, currentAngle, wheelType, highlightSegm
 }
 
 function spinWheel(canvas, ctx, segments, currentAngle, callback, wheelType) {
-    if (isSpinning) return;
+    if (!canvas || !ctx || isSpinning) return;
     isSpinning = true;
 
     const randomSpins = Math.floor(Math.random() * 5) + 3;
@@ -203,85 +214,99 @@ function spinWheel(canvas, ctx, segments, currentAngle, callback, wheelType) {
 }
 
 async function checkSpinCooldown() {
-    try {
-        const userRef = window.dbRef(window.database, 'users/' + currentUser);
-        const snapshot = await window.dbGet(userRef);
-        const userData = snapshot.val() || { lastSpinTime: null };
+    const cooldownText = document.getElementById("cooldownText");
+    if (cooldownText) {
+        try {
+            const userRef = window.dbRef(window.database, 'users/' + currentUser);
+            const snapshot = await window.dbGet(userRef);
+            const userData = snapshot.val() || { lastSpinTime: null };
 
-        const lastSpinTime = userData.lastSpinTime;
-        if (lastSpinTime) {
-            const now = new Date().getTime();
-            const timeDiff = (now - lastSpinTime) / (1000 * 60 * 60);
-            if (timeDiff < 6) {
-                const remaining = 6 - Math.floor(timeDiff);
-                document.getElementById("cooldownText").textContent = `Следующая прокрутка доступна через: ${remaining} часов`;
-                document.getElementById("bonusSpinBtn").disabled = true;
-                document.getElementById("bonusSpinBtn").classList.add("disabled");
-                document.getElementById("mainSpinBtn").disabled = true;
-                document.getElementById("mainSpinBtn").classList.add("disabled");
+            const lastSpinTime = userData.lastSpinTime;
+            if (lastSpinTime) {
+                const now = new Date().getTime();
+                const timeDiff = (now - lastSpinTime) / (1000 * 60 * 60);
+                if (timeDiff < 6) {
+                    const remaining = 6 - Math.floor(timeDiff);
+                    cooldownText.textContent = `Следующая прокрутка доступна через: ${remaining} часов`;
+                    document.getElementById("bonusSpinBtn").disabled = true;
+                    document.getElementById("bonusSpinBtn").classList.add("disabled");
+                    document.getElementById("mainSpinBtn").disabled = true;
+                    document.getElementById("mainSpinBtn").classList.add("disabled");
+                } else {
+                    cooldownText.textContent = "Следующая прокрутка доступна через: -";
+                    document.getElementById("bonusSpinBtn").disabled = false;
+                    document.getElementById("bonusSpinBtn").classList.remove("disabled");
+                }
             } else {
-                document.getElementById("cooldownText").textContent = "Следующая прокрутка доступна через: -";
+                cooldownText.textContent = "Следующая прокрутка доступна через: -";
                 document.getElementById("bonusSpinBtn").disabled = false;
                 document.getElementById("bonusSpinBtn").classList.remove("disabled");
             }
-        } else {
-            document.getElementById("cooldownText").textContent = "Следующая прокрутка доступна через: -";
-            document.getElementById("bonusSpinBtn").disabled = false;
-            document.getElementById("bonusSpinBtn").classList.remove("disabled");
+        } catch (error) {
+            console.error("Ошибка проверки времени спина:", error);
         }
-    } catch (error) {
-        console.error("Ошибка проверки времени спина:", error);
     }
 }
 
 async function spinBonus() {
     if (!await checkLogin()) return;
-    spinWheel(bonusCanvas, bonusCtx, bonusSegments, currentBonusAngle, async (finalAngle, segmentIndex) => {
-        bonusMultiplier = parseInt(bonusSegments[segmentIndex].replace("x", ""));
-        document.getElementById("bonusResult").textContent = `Бонус: ${bonusMultiplier}x`;
-        currentBonusAngle = finalAngle;
-        document.getElementById("mainSpinBtn").disabled = false;
-        document.getElementById("mainSpinBtn").classList.remove("disabled");
-        document.getElementById("bonusSpinBtn").disabled = true;
-        document.getElementById("bonusSpinBtn").classList.add("disabled");
-    }, "bonus");
+    const bonusSpinBtn = document.getElementById("bonusSpinBtn");
+    const bonusResult = document.getElementById("bonusResult");
+    if (bonusSpinBtn && bonusResult) {
+        spinWheel(bonusCanvas, bonusCtx, bonusSegments, currentBonusAngle, async (finalAngle, segmentIndex) => {
+            bonusMultiplier = parseInt(bonusSegments[segmentIndex].replace("x", ""));
+            bonusResult.textContent = `Бонус: ${bonusMultiplier}x`;
+            currentBonusAngle = finalAngle;
+            document.getElementById("mainSpinBtn").disabled = false;
+            document.getElementById("mainSpinBtn").classList.remove("disabled");
+            bonusSpinBtn.disabled = true;
+            bonusSpinBtn.classList.add("disabled");
+        }, "bonus");
+    }
 }
 
 async function spinMain() {
     if (!await checkLogin()) return;
-    spinWheel(mainCanvas, mainCtx, mainSegments, currentMainAngle, async (finalAngle, segmentIndex) => {
-        const win = mainSegments[segmentIndex];
-        let displayWin = win;
-        if (typeof win === "string") displayWin = win;
-        document.getElementById("spinResult").textContent = `Выигрыш: ${displayWin}`;
-        const totalWin = typeof win === "string" ? parseInt(win.replace(/[^0-9]/g, "")) * bonusMultiplier : win * bonusMultiplier;
-        document.getElementById("totalResult").textContent = `Общий выигрыш: ${totalWin}`;
+    const mainSpinBtn = document.getElementById("mainSpinBtn");
+    const spinResult = document.getElementById("spinResult");
+    const totalResult = document.getElementById("totalResult");
+    if (mainSpinBtn && spinResult && totalResult) {
+        spinWheel(mainCanvas, mainCtx, mainSegments, currentMainAngle, async (finalAngle, segmentIndex) => {
+            const win = mainSegments[segmentIndex];
+            let displayWin = win;
+            if (typeof win === "string") displayWin = win;
+            spinResult.textContent = `Выигрыш: ${displayWin}`;
+            const totalWin = typeof win === "string" ? parseInt(win.replace(/[^0-9]/g, "")) * bonusMultiplier : win * bonusMultiplier;
+            totalResult.textContent = `Общий выигрыш: ${totalWin}`;
 
-        try {
-            const userRef = window.dbRef(window.database, 'users/' + currentUser);
-            const snapshot = await window.dbGet(userRef);
-            const userData = snapshot.val() || { balance: 0 };
-            const newBalance = userData.balance + totalWin;
-            await window.dbUpdate(userRef, { balance: newBalance, lastSpinTime: new Date().getTime() });
-            await updateUserInfo();
-        } catch (error) {
-            console.error("Ошибка обновления баланса:", error);
-            alert("Ошибка при обновлении баланса!");
-        }
+            try {
+                const userRef = window.dbRef(window.database, 'users/' + currentUser);
+                const snapshot = await window.dbGet(userRef);
+                const userData = snapshot.val() || { balance: 0 };
+                const newBalance = userData.balance + totalWin;
+                await window.dbUpdate(userRef, { balance: newBalance, lastSpinTime: new Date().getTime() });
+                await updateUserInfo();
+            } catch (error) {
+                console.error("Ошибка обновления баланса:", error);
+                alert("Ошибка при обновлении баланса!");
+            }
 
-        currentMainAngle = finalAngle;
-        document.getElementById("bonusSpinBtn").disabled = true;
-        document.getElementById("bonusSpinBtn").classList.add("disabled");
-        document.getElementById("mainSpinBtn").disabled = true;
-        document.getElementById("mainSpinBtn").classList.add("disabled");
-        await checkSpinCooldown();
-    }, "main");
+            currentMainAngle = finalAngle;
+            mainSpinBtn.disabled = true;
+            mainSpinBtn.classList.add("disabled");
+            document.getElementById("bonusSpinBtn").disabled = true;
+            document.getElementById("bonusSpinBtn").classList.add("disabled");
+            await checkSpinCooldown();
+        }, "main");
+    }
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
-    if (await checkLogin()) {
+    if (await checkLogin() && bonusCanvas && mainCanvas && bonusCtx && mainCtx) {
         drawWheel(bonusCanvas, bonusCtx, bonusSegments, currentBonusAngle, "bonus");
         drawWheel(mainCanvas, mainCtx, mainSegments, currentMainAngle, "main");
         await checkSpinCooldown();
+    } else {
+        console.log("DOM elements not found or login failed");
     }
 });
