@@ -10,7 +10,7 @@ let currentMainAngle = 0;
 let isSpinning = false;
 let bonusMultiplier = 1;
 
-// Удаляем повторное объявление currentUser, так как оно уже есть в main.js
+// Используем глобальную переменную currentUser из main.js, не объявляем заново
 
 async function checkLogin() {
     if (!currentUser) {
