@@ -58,7 +58,7 @@ async function showRoulette() {
             alert("Ваш аккаунт не верифицирован! Обратитесь к администратору.");
             return;
         }
-        window.location.href = "roulette.html"; // Исправляем путь на правильный файл
+        window.location.href = "roulette.html"; // Путь к файлу в корне
     } catch (error) {
         console.error("Ошибка в showRoulette:", error);
         alert("Ошибка при открытии рулетки!");
@@ -310,31 +310,51 @@ async function updateUserInfo() {
             const snapshot = await window.dbGet(userRef);
             const userData = snapshot.val() || { balance: 0, points: 0, isVerified: false };
 
-            avatarElement.textContent = "🧑";
-            loginTextElement.textContent = "Логин: " + currentUser;
-            loginTextElement.classList.remove("blurred");
-            balanceTextElement.textContent = "Баланс: " + userData.balance;
-            balanceTextElement.classList.remove("blurred");
-            pointsTextElement.textContent = "Поинты: " + userData.points;
-            pointsTextElement.classList.remove("blurred");
-            accountButtonElement.textContent = "Мой аккаунт";
-            balanceTextSecondaryElement.textContent = "Баланс: " + userData.balance;
-            balanceTextSecondaryElement.classList.remove("blurred");
-            pointsTextSecondaryElement.textContent = "Поинты: " + userData.points;
-            pointsTextSecondaryElement.classList.remove("blurred");
+            if (avatarElement) avatarElement.textContent = "🧑";
+            if (loginTextElement) {
+                loginTextElement.textContent = "Логин: " + currentUser;
+                loginTextElement.classList.remove("blurred");
+            }
+            if (balanceTextElement) {
+                balanceTextElement.textContent = "Баланс: " + userData.balance;
+                balanceTextElement.classList.remove("blurred");
+            }
+            if (pointsTextElement) {
+                pointsTextElement.textContent = "Поинты: " + userData.points;
+                pointsTextElement.classList.remove("blurred");
+            }
+            if (accountButtonElement) accountButtonElement.textContent = "Мой аккаунт";
+            if (balanceTextSecondaryElement) {
+                balanceTextSecondaryElement.textContent = "Баланс: " + userData.balance;
+                balanceTextSecondaryElement.classList.remove("blurred");
+            }
+            if (pointsTextSecondaryElement) {
+                pointsTextSecondaryElement.textContent = "Поинты: " + userData.points;
+                pointsTextSecondaryElement.classList.remove("blurred");
+            }
         } else {
-            avatarElement.textContent = "🕵️";
-            loginTextElement.textContent = "Логин: [закрыто]";
-            loginTextElement.classList.add("blurred");
-            balanceTextElement.textContent = "Баланс: [закрыто]";
-            balanceTextElement.classList.add("blurred");
-            pointsTextElement.textContent = "Поинты: [закрыто]";
-            pointsTextElement.classList.add("blurred");
-            accountButtonElement.textContent = "Вход/Регистрация";
-            balanceTextSecondaryElement.textContent = "Баланс: [закрыто]";
-            balanceTextSecondaryElement.classList.add("blurred");
-            pointsTextSecondaryElement.textContent = "Поинты: [закрыто]";
-            pointsTextSecondaryElement.classList.add("blurred");
+            if (avatarElement) avatarElement.textContent = "🕵️";
+            if (loginTextElement) {
+                loginTextElement.textContent = "Логин: [закрыто]";
+                loginTextElement.classList.add("blurred");
+            }
+            if (balanceTextElement) {
+                balanceTextElement.textContent = "Баланс: [закрыто]";
+                balanceTextElement.classList.add("blurred");
+            }
+            if (pointsTextElement) {
+                pointsTextElement.textContent = "Поинты: [закрыто]";
+                pointsTextElement.classList.add("blurred");
+            }
+            if (accountButtonElement) accountButtonElement.textContent = "Вход/Регистрация";
+            if (balanceTextSecondaryElement) {
+                balanceTextSecondaryElement.textContent = "Баланс: [закрыто]";
+                balanceTextSecondaryElement.classList.add("blurred");
+            }
+            if (pointsTextSecondaryElement) {
+                pointsTextSecondaryElement.textContent = "Поинты: [закрыто]";
+                pointsTextSecondaryElement.classList.add("blurred");
+            }
         }
     } catch (error) {
         console.error("Ошибка в updateUserInfo:", error);
